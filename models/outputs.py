@@ -16,3 +16,10 @@ class FederalOrdinaryOutput:
     taxable_ordinary_income: float
     total_tax: float
     bracket_trace: List[BracketSlice] = field(default_factory=list)
+
+@dataclass
+class SocialSecurityOutput:
+    total_social_security: float
+    taxable_social_security: float
+    tax_free_social_security: float
+    provisional_income: float
