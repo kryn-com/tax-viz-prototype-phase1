@@ -23,3 +23,11 @@ class SocialSecurityOutput:
     taxable_social_security: float
     tax_free_social_security: float
     provisional_income: float
+
+@dataclass
+class LTCG_QD_Output:
+    total_preferential_income: float
+    taxed_at_0: float
+    taxed_at_15: float
+    taxed_at_20: float
+    total_preferential_tax: float
