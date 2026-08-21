@@ -31,3 +31,14 @@ class LTCG_QD_Output:
     taxed_at_15: float
     taxed_at_20: float
     total_preferential_tax: float
+
+
+@dataclass
+class NIITOutput:
+    net_investment_income: float
+    magi: float
+    threshold_applied: float
+    magi_over_threshold: float
+    tax_base: float
+    niit_rate: float
+    niit_tax: float
