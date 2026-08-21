@@ -1,62 +1,148 @@
-Read the imported repository before proposing any changes.
+# Project Scope — 2026 Federal Tax Prototype
 
-This repository is a Python 2026 federal-income-tax prototype that will eventually power an explanatory tax-visualization application. Your task in this step is documentation only.
+## Purpose
 
-Create or replace one Markdown document at the repository root named:
+This repository is a deterministic, explainable Python prototype for selected 2026 federal income-tax calculations. It is an analytical and educational model intended to support a future tax-visualization application; it is not a tax-preparation, tax-filing, or e-file product.
 
-PROJECT_SCOPE.md
+This document is the durable source of truth for future development sessions and the project owner. Before proposing or implementing work, read the current repository, this document, and the most recent phase handoff document.
 
-Do not modify Python source files, tests, rule tables, package configuration, README, or handoff files. Do not implement any code. Do not invent any tax rules or thresholds.
+## Current Status
 
-The purpose of PROJECT_SCOPE.md is to be the durable source of truth for future Gemini sessions and for the human project owner. It must reconcile the long-term product vision with the actual current implementation state.
+Phases 1 through 3 are complete and merged into the `phase-2-social-security` branch.
 
-Use these current facts as authoritative:
+Phase 3 was merged through PR #1. The full test suite passed locally after the merge:
 
-CURRENTLY COMPLETED FOR THE 2026 FEDERAL PROTOTYPE
-- Strict typed validation through Pydantic using TaxScenarioInput.
-- A versionable federal rule structure centered on rules.federal.year_2026.
-- A federal ordinary-income tax engine that produces taxable ordinary income and a detailed bracket trace.
-- A Social Security taxability engine using provisional-income mechanics and statutory limits.
-- An LTCG/qualified-dividend engine that stacks preferential income above ordinary income and traces slices through the 0%, 15%, and 20% rate bands.
-- A standalone NIIT engine that calculates the NIIT base and 3.8% liability from MAGI threshold and net-investment-income inputs.
-- Tests exist, but the repository remains a prototype and outputs must remain auditable and test-led.
+```text
+33 passed in 0.11s
+```
 
-CURRENT PHASE EXCLUSIONS
-- Married Filing Separately is permanently out of scope. Engines must reject it clearly rather than calculate it.
-- State tax calculations are not part of the current federal prototype.
-- IRMAA is not part of the current federal prototype.
-- UI, API, web framework, Streamlit, FastAPI, Plotly, and chart construction are not part of the current phase.
-- No tax filing, e-file, credits, AMT, payroll tax, self-employment tax, business-entity taxation, multi-state taxation, or complex netting/return-preparation logic.
+The current repository remains a prototype. Its outputs must stay deterministic, side-effect free, auditable, and test-led.
 
-IMPORTANT CURRENT DESIGN DECISIONS
-- The project is an analytical and explanatory model, not a tax filing product.
-- The federal core must be deterministic, side-effect free, and traceable.
-- Each major engine must expose enough structured information to explain its result.
-- Tax logic must remain separate from presentation logic.
-- Threshold values for Social Security, preferential-income bands, and NIIT are intentionally kept inside their relevant engines during this prototype to prevent scope creep. Note this as a deliberate prototype decision and identify migration to centralized year-rule tables as a later maintenance improvement, not current work.
-- LTCG and qualified dividends remain a single combined preferential-income input for this prototype.
-- The project will proceed in small, testable phases; no broad redesigns.
+## Completed Federal Core
 
-THE NEXT IMPLEMENTATION PHASE
-The next phase is a Federal Pipeline Orchestrator only.
+The current 2026 federal prototype includes:
 
-Its responsibility will be to accept one validated TaxScenarioInput, call the already-completed federal engines in the correct dependency order, assemble a unified and typed federal result, calculate transparent aggregate federal totals, and preserve the output traces from each component.
+- Strict typed scenario validation through Pydantic `TaxScenarioInput`
+- A versionable federal-rule structure centered on `rules.federal.year_2026`
+- A federal ordinary-income tax engine that produces taxable ordinary income, total ordinary tax, and a detailed bracket trace
+- A Social Security taxability engine using provisional-income mechanics and statutory limits
+- An LTCG/qualified-dividend engine that stacks combined preferential income above taxable ordinary income and traces the 0%, 15%, and 20% rate-band amounts
+- A standalone NIIT engine that calculates the NIIT base and 3.8% liability from MAGI and net-investment-income inputs
+- A Federal Pipeline Orchestrator that runs the completed engines in dependency order and returns a unified `FederalTaxResult`
+- Automated tests for individual engines and the Phase 3 orchestrator
 
-It is not permitted to:
-- change tax formulas or threshold values;
-- rewrite completed engines;
-- add state tax, IRMAA, perturbations, charts, UI, APIs, or framework dependencies;
-- add new user inputs unless absolutely required to reconcile an existing engine interface;
-- silently invent deduction allocation or tax-treatment rules if the existing code does not already define them.
+## Phase 3 Result
 
-LONG-TERM PRODUCT VISION
-The eventual product will accept a compact scenario including age, filing status, ordinary income, combined LTCG/QD income, Social Security income, deduction choice/amount, nontaxable income, and later state/Medicare assumptions. It will display:
-- a main explanatory income-and-tax stack;
-- deduction shielding;
-- taxable Social Security;
-- ordinary-income bracket slices;
-- LTCG/QD preferential-rate slices;
-- future state and threshold markers;
-- three future marginal “sliver” analyses: +$100 ordinary income, +$100 LTCG/QD income, and +$100 of both.
+The Phase 3 public entry point is:
 
-Future sliver analysis must recompute the full federal result for each scenario rather than shortcut individual tax modules. State tax and IRMAA will eventually be separate modules; IRMAA must always be represented as an economic Medicare-surcharge overlay, never as income tax.
+```python
+orchestrate_federal_tax(scenario: TaxScenarioInput) -> FederalTaxResult
+```
+
+The orchestrator:
+
+1. Explicitly rejects Married Filing Separately.
+2. Calculates taxable Social Security.
+3. Creates an effective scenario that adds taxable Social Security to ordinary income.
+4. Calculates ordinary-income tax using that effective scenario.
+5. Calculates LTCG/QD tax using that effective scenario, preserving ordinary-income stacking behavior.
+6. Calculates prototype AGI and MAGI.
+7. Maps `ltcg_qd_income` to NIIT net investment income for the current prototype.
+8. Returns preserved component outputs and transparent aggregate federal-tax totals.
+
+The aggregate federal total is:
+
+```text
+ordinary tax + LTCG/QD tax + NIIT tax
+```
+
+### Actual Engine Interfaces
+
+The orchestrator must adapt to existing engine interfaces; completed engines should not be renamed or rewritten merely to suit a future orchestration layer.
+
+```python
+compute_taxable_social_security(
+    scenario: TaxScenarioInput,
+) -> SocialSecurityOutput
+
+compute_federal_ordinary_tax(
+    scenario: TaxScenarioInput,
+) -> FederalOrdinaryOutput
+
+compute_preferential_tax(
+    scenario: TaxScenarioInput,
+) -> LTCG_QD_Output
+
+compute_niit(
+    filing_status: FilingStatus,
+    magi: float,
+    net_investment_income: float,
+) -> NIITOutput
+
+compute_taxable_ordinary_income(
+    ordinary_income: float,
+    deduction_amount: float,
+) -> float
+```
+
+The deductions helper returns a scalar taxable-ordinary-income value. It does not currently return a separate structured deduction-output object, so `FederalTaxResult` must not invent or imply one.
+
+## Current Constraints
+
+The following are deliberately out of scope for the current federal prototype:
+
+- Married Filing Separately calculations; engines must reject MFS clearly rather than calculate it
+- State income-tax calculations
+- IRMAA calculations
+- Tax credits
+- Alternative Minimum Tax
+- Payroll tax, self-employment tax, and business-entity taxation
+- Tax filing, e-file, return preparation, or legal-tax-advice functionality
+- Complex gain/loss netting
+- Multi-state taxation
+- UI, API, web framework, Streamlit, FastAPI, Plotly, charts, or presentation-layer implementation
+
+Do not add user inputs unless they are required to reconcile an already-existing engine interface. Do not silently invent deduction allocation, income characterization, or tax-treatment rules.
+
+## Design Decisions
+
+- The project is an analytical and explanatory model, not a filing product.
+- The federal core must remain deterministic, side-effect free, typed, traceable, and test-led.
+- Each major calculation engine must retain enough structured output to explain its result.
+- Tax logic must remain separate from future presentation logic.
+- LTCG and qualified dividends remain one combined preferential-income input for this prototype.
+- Social Security, preferential-income, and NIIT threshold values currently remain in their respective engines to avoid prototype scope creep.
+- Centralizing thresholds into year-rule tables is a future maintenance improvement, not current work.
+- Work proceeds in small, testable phases with no broad redesigns.
+
+## Next-Phase Planning
+
+No Phase 4 implementation scope has been approved yet.
+
+Before selecting or implementing a next phase:
+
+1. Read the current source code, tests, this document, and `PHASE_3_HANDOFF.md`.
+2. Identify one narrow, testable objective.
+3. Write or update the phase proposal before coding.
+4. Verify real callable signatures, result types, and existing tests before proposing adapters.
+5. Do not alter completed tax formulas or engine interfaces without an explicit approved scope change.
+
+Potential future capabilities may include fuller deduction modeling, centralized federal year-rule tables, additional trace/reconciliation support, a carefully isolated state-tax module, IRMAA as a separate economic overlay, or a presentation layer. These are possibilities only, not approved implementation instructions.
+
+## Long-Term Product Vision
+
+The eventual product may accept a compact scenario containing age, filing status, ordinary income, combined LTCG/QD income, Social Security income, deduction selection or amount, nontaxable income, and later state or Medicare assumptions.
+
+A future presentation layer may explain:
+
+- Main income-and-tax stack
+- Deduction shielding
+- Taxable Social Security
+- Ordinary-income bracket slices
+- LTCG/QD preferential-rate slices
+- Future state-tax and threshold markers
+- Marginal “sliver” analyses for incremental ordinary income, LTCG/QD income, and both combined
+
+Future sliver analysis must recompute the full federal pipeline for each altered scenario. It must not shortcut a single tax module.
+
+State tax and IRMAA must remain separate future modules. IRMAA must always be represented as an economic Medicare-surcharge overlay, never as federal income tax.
