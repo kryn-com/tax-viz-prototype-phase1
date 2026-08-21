@@ -20,6 +20,11 @@ class StateTaxRequest:
     tax_year: int
     state_code: str
     filing_status: FilingStatus
+    state_taxable_income: float
+
+    def __post_init__(self):
+        if self.state_taxable_income < 0:
+            raise ValueError("State taxable income cannot be negative.")
 
 
 @dataclass(frozen=True)

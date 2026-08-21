@@ -37,6 +37,7 @@ def test_state_request_and_result_are_typed_without_tax_calculation():
         tax_year=2026,
         state_code="PA",
         filing_status=FilingStatus.SINGLE,
+        state_taxable_income=0.0,
     )
     result = StateTaxResult(
         request=request,
@@ -54,5 +55,6 @@ def test_state_contract_is_side_effect_free():
             tax_year=2026,
             state_code="PA",
             filing_status=FilingStatus.SINGLE,
+            state_taxable_income=0.0,
         )
         request.state_code = "TX"
