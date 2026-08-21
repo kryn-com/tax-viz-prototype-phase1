@@ -80,3 +80,11 @@ class FederalLTCGQDSLiverResult:
     altered_result: FederalTaxResult
     ltcg_qd_income_increment: float
     federal_tax_delta: float
+
+@dataclass
+class FederalCombinedSliverResult:
+    baseline_result: FederalTaxResult
+    altered_result: FederalTaxResult
+    ordinary_income_increment: float
+    ltcg_qd_income_increment: float
+    federal_tax_delta: float
