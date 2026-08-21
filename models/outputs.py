@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 from typing import List, Optional
+from models.inputs import TaxScenarioInput
 
 @dataclass
 class BracketSlice:
@@ -42,3 +43,26 @@ class NIITOutput:
     tax_base: float
     niit_rate: float
     niit_tax: float
+
+@dataclass
+class FederalTaxResult:
+    """
+    Unified result object aggregating the original scenario, derived income bases,
+    and all preserved component outputs from the federal tax pipeline.
+    """
+    scenario: TaxScenarioInput
+
+    agi: float
+    magi: float
+    taxable_ordinary_income: float
+    taxable_preferential_income: float
+
+    ss_output: SocialSecurityOutput
+    ordinary_output: FederalOrdinaryOutput
+    ltcg_qd_output: LTCG_QD_Output
+    niit_output: NIITOutput
+
+    ordinary_tax: float
+    ltcg_qd_tax: float
+    niit_tax: float
+    total_federal_tax: float
