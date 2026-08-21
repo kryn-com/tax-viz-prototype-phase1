@@ -8,7 +8,7 @@ This document is the durable source of truth for future development sessions and
 
 ## Current Status
 
-Phases 1 through 3 are complete and merged into the `phase-2-social-security` branch.
+Phases 1 through 12 are complete in the current prototype.
 
 Phase 3 was merged through PR #1. The full test suite passed locally after the merge:
 
@@ -29,6 +29,7 @@ The current 2026 federal prototype includes:
 - An LTCG/qualified-dividend engine that stacks combined preferential income above taxable ordinary income and traces the 0%, 15%, and 20% rate-band amounts
 - A standalone NIIT engine that calculates the NIIT base and 3.8% liability from MAGI and net-investment-income inputs
 - A Federal Pipeline Orchestrator that runs the completed engines in dependency order and returns a unified `FederalTaxResult`
+- An isolated typed and numeric state-tax boundary for selected flat-tax and no-income-tax states
 - Automated tests for individual engines and the Phase 3 orchestrator
 
 ## Phase 3 Result
@@ -92,7 +93,7 @@ The deductions helper returns a scalar taxable-ordinary-income value. It does no
 The following are deliberately out of scope for the current federal prototype:
 
 - Married Filing Separately calculations; engines must reject MFS clearly rather than calculate it
-- State income-tax calculations
+- Progressive and multi-bracket state income-tax calculations
 - IRMAA calculations
 - Tax credits
 - Alternative Minimum Tax
@@ -110,6 +111,7 @@ Do not add user inputs unless they are required to reconcile an already-existing
 - The federal core must remain deterministic, side-effect free, typed, traceable, and test-led.
 - Each major calculation engine must retain enough structured output to explain its result.
 - Tax logic must remain separate from future presentation logic.
+- State tax remains separate from federal tax and is not integrated into `FederalTaxResult`.
 - LTCG and qualified dividends remain one combined preferential-income input for this prototype.
 - Social Security, preferential-income, and NIIT threshold values currently remain in their respective engines to avoid prototype scope creep.
 - Centralizing thresholds into year-rule tables is a future maintenance improvement, not current work.
@@ -117,7 +119,7 @@ Do not add user inputs unless they are required to reconcile an already-existing
 
 ## Next-Phase Planning
 
-No Phase 4 implementation scope has been approved yet.
+No Phase 13 implementation scope has been approved yet.
 
 Before selecting or implementing a next phase:
 
@@ -127,7 +129,7 @@ Before selecting or implementing a next phase:
 4. Verify real callable signatures, result types, and existing tests before proposing adapters.
 5. Do not alter completed tax formulas or engine interfaces without an explicit approved scope change.
 
-Potential future capabilities may include fuller deduction modeling, centralized federal year-rule tables, additional trace/reconciliation support, a carefully isolated state-tax module, IRMAA as a separate economic overlay, or a presentation layer. These are possibilities only, not approved implementation instructions.
+Potential future capabilities may include fuller deduction modeling, centralized federal year-rule tables, additional trace/reconciliation support, carefully bounded state-tax expansion, IRMAA as a separate economic overlay, or a presentation layer. These are possibilities only, not approved implementation instructions.
 
 ## Long-Term Product Vision
 
