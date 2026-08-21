@@ -88,3 +88,12 @@ class FederalCombinedSliverResult:
     ordinary_income_increment: float
     ltcg_qd_income_increment: float
     federal_tax_delta: float
+
+@dataclass
+class FederalTaxReconciliation:
+    ordinary_tax: float
+    ltcg_qd_tax: float
+    niit_tax: float
+    component_tax_total: float
+    reported_total_federal_tax: float
+    reconciliation_delta: float
