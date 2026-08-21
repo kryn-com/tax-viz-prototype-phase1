@@ -1,39 +1,31 @@
 # Phase 2 Handoff Document
 
-## Completed in Phase 1
+## Completed Engines & Features
 
-* **Strict typed input validation:** via Pydantic (`TaxScenarioInput`). Automatically rejects invalid states (e.g., negative deductions, unsupported years).
+- **Strict typed input validation**: via Pydantic (`TaxScenarioInput`). Automatically rejects invalid states such as negative deductions and unsupported years.
+- **Tax bracket framework**: A versionable rule structure (`rules.federal.year_2026`) that cleanly segregates tax policy data from engine logic.
+- **Ordinary income tax engine**: Determines `taxable_ordinary_income` and generates a precise `bracket_trace` showing the exact slice of income taxed per bracket.
+- **Social Security taxability engine**: Computes taxable benefits using provisional income mechanics and statutory limits.
+- **LTCG and qualified dividends engine**: Stacks preferential income on top of ordinary income to calculate slices running through the 0%, 15%, and 20% thresholds.
+- **Net Investment Income Tax (NIIT) engine**: Computes the NIIT tax base and 3.8% tax liability based on MAGI thresholds and net investment income.
 
-* **Tax Bracket Framework:** A versionable rule structure (`rules.federal.year_2026`) that cleanly segregates tax policy data from engine logic.
+## Scope Exclusions
 
-* **Ordinary Income Tax Engine:** Determines `taxable_ordinary_income` and generates a precise `bracket_trace` showing the exact slice of income taxed per bracket.
+- **Married Filing Separately (MFS)**: Permanently out of scope across all engines due to complex edge cases.
+- **State tax logic**: Out of scope for the current federal prototype phase.
+- **IRMAA cliffs**: Out of scope for the current phase.
+- **UI / Frontend**: Out of scope.
 
-* **Automated Tests:** Covered edge cases (spanning brackets, exactly hitting bounds, zero taxable income floors).
+## Recommended Next Step
 
-* **Architecture Stubs:** `interfaces/stubs.py` outlines where future calculation engines belong.
+- **Pipeline orchestrator**: Create a top-level runner to sequence data flow between completed engines and assemble a unified federal tax summary.
 
-## Recommended Phase 2 Build Order
+## Future Expansion
 
-1. **LTCG & Qualified Dividends Engine:**
-
-   * Integrate with the existing bracket trace concept. Preferential income stacks *on top* of ordinary income.
-
-2. **Social Security Taxability Engine:**
-
-   * Needs to pre-process before deductions, computing provisional income to find the taxable SS portion, which is then injected back into ordinary income.
-
-3. **NIIT (Net Investment Income Tax):**
-
-   * Requires knowing both MAGI and total investment income.
-
-4. **State Tax Plugin Framework:**
-
-   * Requires abstracting state-level rules in `rules/states/` mimicking the federal pattern.
+- State tax plugin abstraction remains a future-phase item.
+- IRMAA surcharge modules remain a future-phase item.
 
 ## Major Design Choices
 
-* **Pydantic for Inputs:** Chosen over standard dataclasses to push validation logic (like `ge=0` and custom validators) out of the calculation engine.
-
-* **Full Bracket Traces:** The engine processes *every* bracket, even if 0 income falls into it. This ensures chart generating utilities downstream have full context of the bracket bounds.
-
-* **Explicit Deductions:** `deduction_amount` is explicitly passed rather than auto-inferring standard vs itemized at this phase.
+- **Standalone calculation engines**: Engines operate cleanly on standard inputs. An orchestration manager can assemble individual outputs into a unified tax summary.
+- **Hardcoded thresholds**: To prevent scope creep, threshold parameters for NIIT, Social Security, and preferential tax rates are maintained within their respective engine implementations.
