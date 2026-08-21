@@ -2,7 +2,7 @@ import pytest
 
 from engines import sliver_analysis
 from models.inputs import FilingStatus, TaxScenarioInput
-from models.outputs import FederalSliverResult
+from models.outputs import FederalLTCGQDSLiverResult, FederalSliverResult
 
 
 def create_sliver_scenario(
@@ -79,6 +79,73 @@ def test_ordinary_income_sliver_requires_positive_increment(increment):
 def test_ordinary_income_sliver_preserves_mfs_rejection():
     with pytest.raises(ValueError, match="Married Filing Separately \\(MFS\\) is unsupported"):
         sliver_analysis.analyze_ordinary_income_sliver(
+            create_sliver_scenario(FilingStatus.MARRIED_FILING_SEPARATELY),
+            increment=1000.0,
+        )
+
+
+def test_ltcg_qd_sliver_recomputes_full_pipeline_and_delta():
+    scenario = create_sliver_scenario()
+
+    result = sliver_analysis.analyze_ltcg_qd_sliver(scenario, increment=1000.0)
+
+    assert isinstance(result, FederalLTCGQDSLiverResult)
+    assert result.baseline_result.scenario is scenario
+    assert result.altered_result.scenario.ltcg_qd_income == 21000.0
+    assert result.altered_result.scenario.ordinary_income == scenario.ordinary_income
+    assert result.ltcg_qd_income_increment == 1000.0
+    assert result.federal_tax_delta == pytest.approx(
+        result.altered_result.total_federal_tax
+        - result.baseline_result.total_federal_tax
+    )
+    assert result.altered_result.ss_output is not None
+    assert result.altered_result.ordinary_output is not None
+    assert result.altered_result.ltcg_qd_output is not None
+    assert result.altered_result.niit_output is not None
+
+
+def test_ltcg_qd_sliver_does_not_mutate_input():
+    scenario = create_sliver_scenario()
+    original_values = scenario.model_dump()
+
+    result = sliver_analysis.analyze_ltcg_qd_sliver(scenario, increment=1000.0)
+
+    assert scenario.model_dump() == original_values
+    assert result.baseline_result.scenario is scenario
+    assert result.altered_result.scenario is not scenario
+
+
+def test_ltcg_qd_sliver_calls_orchestrator_twice(monkeypatch):
+    scenario = create_sliver_scenario()
+    real_orchestrator = sliver_analysis.orchestrate_federal_tax
+    calls = []
+
+    def tracking_orchestrator(call_scenario):
+        calls.append(call_scenario)
+        return real_orchestrator(call_scenario)
+
+    monkeypatch.setattr(sliver_analysis, "orchestrate_federal_tax", tracking_orchestrator)
+
+    sliver_analysis.analyze_ltcg_qd_sliver(scenario, increment=1000.0)
+
+    assert len(calls) == 2
+    assert calls[0] is scenario
+    assert calls[1] is not scenario
+    assert calls[1].ltcg_qd_income == 21000.0
+    assert calls[1].ordinary_income == scenario.ordinary_income
+
+
+@pytest.mark.parametrize("increment", [0.0, -1.0])
+def test_ltcg_qd_sliver_requires_positive_increment(increment):
+    with pytest.raises(ValueError, match="must be greater than zero"):
+        sliver_analysis.analyze_ltcg_qd_sliver(
+            create_sliver_scenario(), increment=increment
+        )
+
+
+def test_ltcg_qd_sliver_preserves_mfs_rejection():
+    with pytest.raises(ValueError, match="Married Filing Separately \\(MFS\\) is unsupported"):
+        sliver_analysis.analyze_ltcg_qd_sliver(
             create_sliver_scenario(FilingStatus.MARRIED_FILING_SEPARATELY),
             increment=1000.0,
         )
