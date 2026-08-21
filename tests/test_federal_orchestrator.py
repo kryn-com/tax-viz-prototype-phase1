@@ -38,6 +38,77 @@ def test_orchestrator_mfs_rejection():
         orchestrate_federal_tax(scenario)
 
 
+def test_orchestrator_does_not_mutate_input():
+    """Verifies taxable Social Security is added only to an effective scenario."""
+    scenario = TaxScenarioInput(
+        tax_year=2026,
+        state_code="NC",
+        filing_status=FilingStatus.SINGLE,
+        ordinary_income=40000.0,
+        ltcg_qd_income=10000.0,
+        social_security_income=30000.0,
+        deduction_mode=DeductionMode.STANDARD,
+    )
+    original_values = scenario.model_dump()
+
+    result = orchestrate_federal_tax(scenario)
+
+    assert scenario.model_dump() == original_values
+    assert result.scenario is scenario
+
+
+def test_orchestrator_rejects_mfs_before_downstream_calls(monkeypatch):
+    """Verifies MFS rejection occurs before any imported downstream engine call."""
+    scenario = TaxScenarioInput(
+        tax_year=2026,
+        state_code="NC",
+        filing_status=FilingStatus.MARRIED_FILING_SEPARATELY,
+        ordinary_income=50000.0,
+    )
+
+    def downstream_call_not_allowed(*args, **kwargs):
+        raise AssertionError("Downstream engine was called for MFS.")
+
+    monkeypatch.setattr(
+        "engines.federal_orchestrator.compute_taxable_social_security",
+        downstream_call_not_allowed,
+    )
+    monkeypatch.setattr(
+        "engines.federal_orchestrator.compute_federal_ordinary_tax",
+        downstream_call_not_allowed,
+    )
+    monkeypatch.setattr(
+        "engines.federal_orchestrator.compute_preferential_tax",
+        downstream_call_not_allowed,
+    )
+    monkeypatch.setattr(
+        "engines.federal_orchestrator.compute_niit",
+        downstream_call_not_allowed,
+    )
+
+    with pytest.raises(ValueError, match="Married Filing Separately \\(MFS\\) is unsupported."):
+        orchestrate_federal_tax(scenario)
+
+
+def test_orchestrator_head_of_household_smoke():
+    """Verifies a supported Head of Household scenario completes the pipeline."""
+    scenario = TaxScenarioInput(
+        tax_year=2026,
+        state_code="NC",
+        filing_status=FilingStatus.HEAD_OF_HOUSEHOLD,
+        ordinary_income=40000.0,
+        ltcg_qd_income=10000.0,
+    )
+
+    result = orchestrate_federal_tax(scenario)
+
+    assert result.scenario is scenario
+    assert result.agi == 50000.0
+    assert result.total_federal_tax == pytest.approx(
+        result.ordinary_tax + result.ltcg_qd_tax + result.niit_tax
+    )
+
+
 def test_orchestrator_ss_flow():
     """Verifies Social Security income flows into gross ordinary income and increases ordinary tax."""
     scenario = TaxScenarioInput(
