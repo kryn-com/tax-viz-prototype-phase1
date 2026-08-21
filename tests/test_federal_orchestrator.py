@@ -57,6 +57,36 @@ def test_orchestrator_does_not_mutate_input():
     assert result.scenario is scenario
 
 
+def test_orchestrator_applies_deduction_after_taxable_social_security():
+    """Verifies deductions apply to effective ordinary income without reducing LTCG/QD income."""
+    scenario = TaxScenarioInput(
+        tax_year=2026,
+        state_code="NC",
+        filing_status=FilingStatus.SINGLE,
+        ordinary_income=40000.0,
+        ltcg_qd_income=20000.0,
+        social_security_income=30000.0,
+        deduction_mode=DeductionMode.EXPLICIT,
+        deduction_amount=10000.0,
+    )
+    original_values = scenario.model_dump()
+
+    result = orchestrate_federal_tax(scenario)
+
+    effective_ordinary_income = (
+        scenario.ordinary_income + result.ss_output.taxable_social_security
+    )
+    assert result.ordinary_output.ordinary_income == pytest.approx(
+        effective_ordinary_income
+    )
+    assert result.ordinary_output.deduction_applied == scenario.deduction_amount
+    assert result.taxable_ordinary_income == pytest.approx(
+        max(0.0, effective_ordinary_income - scenario.deduction_amount)
+    )
+    assert result.taxable_preferential_income == scenario.ltcg_qd_income
+    assert scenario.model_dump() == original_values
+
+
 def test_orchestrator_rejects_mfs_before_downstream_calls(monkeypatch):
     """Verifies MFS rejection occurs before any imported downstream engine call."""
     scenario = TaxScenarioInput(
