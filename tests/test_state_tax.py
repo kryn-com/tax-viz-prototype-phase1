@@ -18,11 +18,20 @@ def create_state_request(
     )
 
 
-def test_pa_known_base_calculation():
-    result = compute_state_tax(create_state_request("PA", 100000.0))
+@pytest.mark.parametrize(
+    ("state_code", "rate"),
+    [
+        ("PA", 0.0307),
+        ("NC", 0.0399),
+        ("IL", 0.0495),
+        ("IN", 0.029),
+    ],
+)
+def test_flat_tax_known_base_calculation(state_code, rate):
+    result = compute_state_tax(create_state_request(state_code, 100000.0))
 
     assert result.support is StateTaxSupport.FLAT_TAX
-    assert result.state_tax_amount == pytest.approx(3070.0)
+    assert result.state_tax_amount == pytest.approx(100000.0 * rate)
 
 
 def test_pa_zero_base():
@@ -31,7 +40,7 @@ def test_pa_zero_base():
     assert result.state_tax_amount == 0.0
 
 
-@pytest.mark.parametrize("state_code", ["FL", "TX"])
+@pytest.mark.parametrize("state_code", ["FL", "TX", "WA", "NV", "SD", "WY"])
 def test_no_income_tax_states_return_explicit_zero(state_code):
     result = compute_state_tax(create_state_request(state_code, 100000.0))
 
@@ -39,7 +48,7 @@ def test_no_income_tax_states_return_explicit_zero(state_code):
     assert result.state_tax_amount == 0.0
 
 
-@pytest.mark.parametrize("state_code", ["NC", "ZZ"])
+@pytest.mark.parametrize("state_code", ["MI", "ZZ"])
 def test_unsupported_states_raise(state_code):
     with pytest.raises(UnsupportedStateError, match=state_code):
         compute_state_tax(create_state_request(state_code, 100000.0))

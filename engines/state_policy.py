@@ -3,8 +3,15 @@ from models.state import StateTaxSupport, UnsupportedStateError
 
 STATE_SUPPORT_POLICY = {
     "PA": StateTaxSupport.FLAT_TAX,
+    "NC": StateTaxSupport.FLAT_TAX,
+    "IL": StateTaxSupport.FLAT_TAX,
+    "IN": StateTaxSupport.FLAT_TAX,
     "FL": StateTaxSupport.NO_INCOME_TAX,
     "TX": StateTaxSupport.NO_INCOME_TAX,
+    "WA": StateTaxSupport.NO_INCOME_TAX,
+    "NV": StateTaxSupport.NO_INCOME_TAX,
+    "SD": StateTaxSupport.NO_INCOME_TAX,
+    "WY": StateTaxSupport.NO_INCOME_TAX,
 }
 
 
