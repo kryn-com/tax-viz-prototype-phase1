@@ -1,0 +1,84 @@
+import pytest
+
+from engines import sliver_analysis
+from models.inputs import FilingStatus, TaxScenarioInput
+from models.outputs import FederalSliverResult
+
+
+def create_sliver_scenario(
+    filing_status: FilingStatus = FilingStatus.SINGLE,
+) -> TaxScenarioInput:
+    return TaxScenarioInput(
+        tax_year=2026,
+        state_code="NC",
+        filing_status=filing_status,
+        ordinary_income=40000.0,
+        ltcg_qd_income=20000.0,
+        social_security_income=30000.0,
+        deduction_amount=10000.0,
+    )
+
+
+def test_ordinary_income_sliver_recomputes_full_pipeline_and_delta():
+    scenario = create_sliver_scenario()
+
+    result = sliver_analysis.analyze_ordinary_income_sliver(scenario, increment=1000.0)
+
+    assert isinstance(result, FederalSliverResult)
+    assert result.baseline_result.scenario is scenario
+    assert result.altered_result.scenario.ordinary_income == 41000.0
+    assert result.ordinary_income_increment == 1000.0
+    assert result.federal_tax_delta == pytest.approx(
+        result.altered_result.total_federal_tax
+        - result.baseline_result.total_federal_tax
+    )
+    assert result.altered_result.ss_output is not None
+    assert result.altered_result.ordinary_output is not None
+    assert result.altered_result.ltcg_qd_output is not None
+    assert result.altered_result.niit_output is not None
+
+
+def test_ordinary_income_sliver_does_not_mutate_input():
+    scenario = create_sliver_scenario()
+    original_values = scenario.model_dump()
+
+    result = sliver_analysis.analyze_ordinary_income_sliver(scenario, increment=1000.0)
+
+    assert scenario.model_dump() == original_values
+    assert result.baseline_result.scenario is scenario
+    assert result.altered_result.scenario is not scenario
+
+
+def test_ordinary_income_sliver_calls_orchestrator_twice(monkeypatch):
+    scenario = create_sliver_scenario()
+    real_orchestrator = sliver_analysis.orchestrate_federal_tax
+    calls = []
+
+    def tracking_orchestrator(call_scenario):
+        calls.append(call_scenario)
+        return real_orchestrator(call_scenario)
+
+    monkeypatch.setattr(sliver_analysis, "orchestrate_federal_tax", tracking_orchestrator)
+
+    sliver_analysis.analyze_ordinary_income_sliver(scenario, increment=1000.0)
+
+    assert len(calls) == 2
+    assert calls[0] is scenario
+    assert calls[1] is not scenario
+    assert calls[1].ordinary_income == 41000.0
+
+
+@pytest.mark.parametrize("increment", [0.0, -1.0])
+def test_ordinary_income_sliver_requires_positive_increment(increment):
+    with pytest.raises(ValueError, match="must be greater than zero"):
+        sliver_analysis.analyze_ordinary_income_sliver(
+            create_sliver_scenario(), increment=increment
+        )
+
+
+def test_ordinary_income_sliver_preserves_mfs_rejection():
+    with pytest.raises(ValueError, match="Married Filing Separately \\(MFS\\) is unsupported"):
+        sliver_analysis.analyze_ordinary_income_sliver(
+            create_sliver_scenario(FilingStatus.MARRIED_FILING_SEPARATELY),
+            increment=1000.0,
+        )

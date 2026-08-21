@@ -66,3 +66,10 @@ class FederalTaxResult:
     ltcg_qd_tax: float
     niit_tax: float
     total_federal_tax: float
+
+@dataclass
+class FederalSliverResult:
+    baseline_result: FederalTaxResult
+    altered_result: FederalTaxResult
+    ordinary_income_increment: float
+    federal_tax_delta: float
