@@ -35,6 +35,9 @@ BRACKETS_2026: Dict[FilingStatus, List[BracketDef]] = {
         {"rate": 0.35, "lower": 512450.0, "upper": 768700.0},
         {"rate": 0.37, "lower": 768700.0, "upper": None},
     ],
+    # Inactive data: MARRIED_FILING_SEPARATELY is permanently unsupported by
+    # this prototype. The federal orchestrator rejects this filing status.
+    # Do not add MFS scenarios, fixtures, or orchestrator support.
     FilingStatus.MARRIED_FILING_SEPARATELY: [
         {"rate": 0.10, "lower": 0.0, "upper": 11600.0},
         {"rate": 0.12, "lower": 11600.0, "upper": 47150.0},
