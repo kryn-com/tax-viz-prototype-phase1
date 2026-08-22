@@ -11,6 +11,26 @@ def build_federal_tax_stack_view_model(
     result: FederalTaxResult,
 ) -> FederalTaxStackViewModel:
     display_model = build_federal_display_model(result)
+    ordinary_marginal_layers = tuple(
+        sorted(
+            (
+                layer
+                for layer in display_model.ordinary_bracket_slices
+                if layer.taxed_amount != 0.0 or layer.tax_generated != 0.0
+            ),
+            key=lambda layer: layer.rate,
+        )
+    )
+    preferential_rate_layers = tuple(
+        sorted(
+            (
+                layer
+                for layer in display_model.preferential_rate_slices
+                if layer.taxed_amount != 0.0
+            ),
+            key=lambda layer: layer.rate,
+        )
+    )
 
     return FederalTaxStackViewModel(
         tax_year=display_model.tax_year,
@@ -19,8 +39,8 @@ def build_federal_tax_stack_view_model(
         taxable_ordinary_income=display_model.taxable_ordinary_income,
         preferential_income=display_model.preferential_income,
         deduction_shielding_amount=result.ordinary_output.deduction_applied,
-        ordinary_marginal_layers=display_model.ordinary_bracket_slices,
-        preferential_rate_layers=display_model.preferential_rate_slices,
+        ordinary_marginal_layers=ordinary_marginal_layers,
+        preferential_rate_layers=preferential_rate_layers,
         social_security=FederalTaxStackSocialSecurity(
             total_social_security=result.ss_output.total_social_security,
             taxable_social_security=result.ss_output.taxable_social_security,

@@ -18,7 +18,10 @@ def _format_currency(value: float) -> str:
 
 
 def _format_rate(value: float) -> str:
-    return f"{value * 100:.2f}%"
+    percentage = value * 100
+    if percentage.is_integer():
+        return f"{percentage:.0f}%"
+    return f"{percentage:.2f}%"
 
 
 def _text(class_name: str, x: int, y: int, value: str) -> str:
@@ -79,6 +82,34 @@ def _render_panel_line(label: str, value: str, y: int) -> str:
     )
 
 
+def _render_scenario_summary(view_model: FederalTaxStackViewModel) -> list[str]:
+    return [
+        '  <g id="scenario-summary">',
+        _text("section-title", _LEFT, 88, "Scenario inputs (audit target)"),
+        _text(
+            "context",
+            _LEFT,
+            110,
+            f"Tax year: {view_model.tax_year} | Filing status: {view_model.filing_status}",
+        ),
+        _text(
+            "context",
+            _LEFT,
+            130,
+            f"Ordinary income: {_format_currency(view_model.ordinary_income)} | "
+            f"Preferential income: {_format_currency(view_model.preferential_income)}",
+        ),
+        _text(
+            "context",
+            _LEFT,
+            150,
+            f"Social Security: {_format_currency(view_model.social_security.total_social_security)} | "
+            f"Shielding amount: {_format_currency(view_model.deduction_shielding_amount)}",
+        ),
+        "  </g>",
+    ]
+
+
 def _render_social_security_panel(view_model: FederalTaxStackViewModel) -> list[str]:
     social_security = view_model.social_security
     lines = [
@@ -124,9 +155,9 @@ def render_federal_tax_stack_svg(
         f'viewBox="0 0 {_WIDTH} {_HEIGHT}">',
         "  <title>Federal Tax Stack</title>",
         _text("title", _LEFT, 34, f"Federal Tax Stack ({view_model.tax_year})"),
-        _text("context", _LEFT, 60, f"Filing status: {view_model.filing_status}"),
-        _text("context", _LEFT, 82, "Federal-only scope"),
-        _text("total", _LEFT, 112, f"Total federal tax: {_format_currency(view_model.total_federal_tax)}"),
+        _text("context", _LEFT, 60, "Federal-only scope"),
+        *_render_scenario_summary(view_model),
+        _text("total", _LEFT, 178, f"Total federal tax: {_format_currency(view_model.total_federal_tax)}"),
         "  <style>",
         "    .title { font: bold 24px sans-serif; fill: #202124; }",
         "    .context, .total, .section-title, .layer-label, .layer-value, .layer-tax, .empty, .panel-title, .panel-label, .panel-value, .panel-note { font: 14px sans-serif; fill: #202124; }",
@@ -135,7 +166,7 @@ def render_federal_tax_stack_svg(
         "    .shielding { fill: #d9ead3; stroke: #6aa84f; stroke-width: 1; }",
         "    .ordinary { fill: #cfe2f3; stroke: #3d85c6; stroke-width: 1; }",
         "    .preferential { fill: #fce5cd; stroke: #e69138; stroke-width: 1; }",
-        "    .panel { stroke-width: 1; }",
+        "    .panel { stroke-width: 1; opacity: 0.82; }",
         "    .social-security-panel { fill: #f3f3f3; stroke: #999999; }",
         "    .niit-panel { fill: #fff2cc; stroke: #bf9000; }",
         "    .layer-value, .layer-tax, .panel-note, .empty { fill: #5f6368; }",
@@ -154,7 +185,7 @@ def render_federal_tax_stack_svg(
             "layer-value",
             _STACK_X + 12,
             716,
-            f"{_format_currency(view_model.deduction_shielding_amount)} deduction applied",
+            "Conceptual shielding zone; allocation not specified",
         )
     )
     lines.append("  </g>")
@@ -171,7 +202,7 @@ def render_federal_tax_stack_svg(
                     layer.rate,
                     layer.taxed_amount,
                     layer.tax_generated,
-                    ordinary_top + index * _ROW_HEIGHT,
+                    ordinary_top + (len(view_model.ordinary_marginal_layers) - index - 1) * _ROW_HEIGHT,
                     "ordinary",
                 )
             )
@@ -191,7 +222,7 @@ def render_federal_tax_stack_svg(
                     layer.rate,
                     layer.taxed_amount,
                     None,
-                    preferential_top + index * _ROW_HEIGHT,
+                    preferential_top + (len(view_model.preferential_rate_layers) - index - 1) * _ROW_HEIGHT,
                     "preferential",
                 )
             )

@@ -1,3 +1,4 @@
+import re
 from xml.etree import ElementTree
 
 from engines.federal_orchestrator import orchestrate_federal_tax
@@ -47,6 +48,7 @@ def test_render_tax_stack_svg_includes_headers_and_sections_in_order():
     labels = [
         "Federal Tax Stack",
         "Federal-only scope",
+        "Scenario inputs (audit target)",
         "Deduction / 0% shielding",
         "Ordinary-income marginal layers",
         "LTCG/QD rate layers",
@@ -61,9 +63,26 @@ def test_render_tax_stack_svg_preserves_layer_order_and_formats_values():
     svg = render_federal_tax_stack_svg(create_model())
 
     assert svg.index("Ordinary layer 1") < svg.index("Ordinary layer 2")
-    assert svg.index("LTCG/QD layer 1") < svg.index("LTCG/QD layer 2")
-    assert "0.00%" in svg
+    ordinary_layer_positions = [
+        int(position)
+        for position in re.findall(
+            r'<g id="ordinary-layer">\s*<rect class="ordinary" x="48" y="(\d+)"',
+            svg,
+        )
+    ]
+    assert ordinary_layer_positions == sorted(ordinary_layer_positions, reverse=True)
+    assert "10%" in svg
+    assert "0.00%" not in svg
     assert "$20,000.00" in svg
+
+
+def test_render_tax_stack_svg_omits_non_applicable_preferential_rates():
+    svg = render_federal_tax_stack_svg(create_model())
+
+    assert "LTCG/QD layer 1" in svg
+    assert "LTCG/QD layer 2" not in svg
+    assert "LTCG/QD layer 3" not in svg
+    assert "15% | $20,000.00" in svg
 
 
 def test_render_tax_stack_svg_includes_social_security_and_niit_content():
@@ -87,7 +106,8 @@ def test_render_tax_stack_svg_represents_zero_values_and_empty_layers():
     svg = render_federal_tax_stack_svg(zero_model)
 
     assert "0% shielding" in svg
-    assert "$0.00 deduction applied" in svg
+    assert "Conceptual shielding zone; allocation not specified" in svg
+    assert "$0.00 deduction applied" not in svg
     assert svg.count("No layers") == 2
 
 
