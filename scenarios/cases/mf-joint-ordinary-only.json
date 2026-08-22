@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "id": "mf-joint-ordinary-only",
+  "description": "Married filing jointly with ordinary income only and standard deduction",
+  "tags": ["manual", "ordinary-income", "mfj"],
+  "status": "active",
+  "scenario": {
+    "tax_year": 2026,
+    "state_code": "NC",
+    "filing_status": "married_filing_jointly",
+    "ordinary_income": 120000.0,
+    "ltcg_qd_income": 0.0,
+    "social_security_income": 0.0,
+    "nontaxable_income": 0.0,
+    "deduction_mode": "standard",
+    "deduction_amount": 0.0
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "id": "single-baseline",
+  "description": "Single filer with ordinary income, LTCG/QD, and Social Security",
+  "tags": ["baseline", "social-security"],
+  "scenario": {
+    "tax_year": 2026,
+    "state_code": "NC",
+    "filing_status": "single",
+    "ordinary_income": 60000.0,
+    "ltcg_qd_income": 20000.0,
+    "social_security_income": 30000.0,
+    "nontaxable_income": 0.0,
+    "deduction_mode": "standard",
+    "deduction_amount": 0.0
+  },
+  "expected": {
+    "total_federal_tax": 16863.0,
+    "ordinary_tax": 13863.0,
+    "ltcg_qd_tax": 3000.0,
+    "niit_tax": 0.0
+  }
+}

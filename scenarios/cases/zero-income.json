@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "id": "zero-income",
+  "description": "Zero-income boundary case",
+  "tags": ["boundary", "zero"],
+  "scenario": {
+    "tax_year": 2026,
+    "state_code": "NC",
+    "filing_status": "single",
+    "ordinary_income": 0.0,
+    "ltcg_qd_income": 0.0,
+    "social_security_income": 0.0,
+    "nontaxable_income": 0.0,
+    "deduction_mode": "explicit",
+    "deduction_amount": 0.0
+  }
+}
