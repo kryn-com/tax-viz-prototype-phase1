@@ -11,10 +11,11 @@ _STACK_WIDTH = 540
 _PANEL_X = 630
 _PANEL_WIDTH = 320
 _ROW_HEIGHT = 42
+_STACK_BOTTOM = 740
 
 
 def _format_currency(value: float) -> str:
-    return f"${value:,.2f}"
+    return f"${value:,.0f}"
 
 
 def _format_rate(value: float) -> str:
@@ -48,7 +49,7 @@ def _render_layer(
             "layer-value",
             _STACK_X + 12,
             y + 34,
-            f"{_format_rate(rate)} | {_format_currency(amount)}",
+            _format_currency(amount),
         )
     )
     if tax is not None:
@@ -83,29 +84,53 @@ def _render_panel_line(label: str, value: str, y: int) -> str:
 
 
 def _render_scenario_summary(view_model: FederalTaxStackViewModel) -> list[str]:
+    source_ordinary_income = (
+        view_model.ordinary_income - view_model.social_security.taxable_social_security
+    )
+    total_income = (
+        source_ordinary_income
+        + view_model.preferential_income
+        + view_model.social_security.total_social_security
+        + view_model.nontaxable_income
+    )
+    filing_status = {
+        "single": "Single",
+        "married_filing_jointly": "Married filing jointly",
+        "married_filing_separately": "Married filing separately",
+        "head_of_household": "Head of household",
+    }.get(getattr(view_model.filing_status, "value", view_model.filing_status), str(view_model.filing_status))
+    deduction_type = {
+        "standard": "Standard",
+        "itemized": "Itemized",
+        "explicit": "Explicit",
+    }.get(getattr(view_model.deduction_mode, "value", view_model.deduction_mode), str(view_model.deduction_mode))
     return [
         '  <g id="scenario-summary">',
-        _text("section-title", _LEFT, 88, "Scenario inputs (audit target)"),
+        _text("section-title", _LEFT, 88, "Scenario"),
         _text(
             "context",
             _LEFT,
             110,
-            f"Tax year: {view_model.tax_year} | Filing status: {view_model.filing_status}",
+            f"Tax year: {view_model.tax_year} | Filing status: {filing_status}",
         ),
-        _text(
-            "context",
-            _LEFT,
-            130,
-            f"Ordinary income: {_format_currency(view_model.ordinary_income)} | "
-            f"Preferential income: {_format_currency(view_model.preferential_income)}",
-        ),
-        _text(
-            "context",
-            _LEFT,
-            150,
-            f"Social Security: {_format_currency(view_model.social_security.total_social_security)} | "
-            f"Shielding amount: {_format_currency(view_model.deduction_shielding_amount)}",
-        ),
+        _text("section-title", _LEFT, 132, "Income summary"),
+        _text("context", _LEFT, 152, "Source"),
+        _text("context", 300, 152, "Amount"),
+        _text("context", _LEFT, 170, "Ordinary income"),
+        _text("context", 300, 170, _format_currency(source_ordinary_income)),
+        _text("context", _LEFT, 188, "LTCG / qualified dividends"),
+        _text("context", 300, 188, _format_currency(view_model.preferential_income)),
+        _text("context", _LEFT, 206, "Social Security (total)"),
+        _text("context", 300, 206, _format_currency(view_model.social_security.total_social_security)),
+        _text("context", _LEFT, 224, "Nontaxable income"),
+        _text("context", 300, 224, _format_currency(view_model.nontaxable_income)),
+        _text("context", _LEFT, 242, "Total displayed income"),
+        _text("context", 300, 242, _format_currency(total_income)),
+        _text("context", _LEFT, 260, "Deduction type"),
+        _text("context", 300, 260, deduction_type),
+        _text("context", _LEFT, 278, "Deduction amount"),
+        _text("context", 300, 278, _format_currency(view_model.deduction_shielding_amount)),
+        _text("panel-note", _LEFT, 300, "Taxable Social Security is included in ordinary income; tax-free is not."),
         "  </g>",
     ]
 
@@ -115,13 +140,18 @@ def _render_social_security_panel(view_model: FederalTaxStackViewModel) -> list[
     lines = [
         f'  <g id="social-security">',
         f'    <rect class="panel social-security-panel" x="{_PANEL_X}" y="145" '
-        f'width="{_PANEL_WIDTH}" height="190" />',
+        f'width="{_PANEL_WIDTH}" height="220" />',
         _text("panel-title", _PANEL_X + 16, 174, "Social Security explanation"),
-        _render_panel_line("Total Social Security", _format_currency(social_security.total_social_security), 202),
-        _render_panel_line("Taxable Social Security", _format_currency(social_security.taxable_social_security), 226),
-        _render_panel_line("Tax-free Social Security", _format_currency(social_security.tax_free_social_security), 250),
-        _render_panel_line("Provisional income", _format_currency(social_security.provisional_income), 274),
-        _text("panel-note", _PANEL_X + 16, 310, "Explanation only; included in ordinary-income result."),
+        _render_panel_line("Total Social Security", _format_currency(social_security.total_social_security), 204),
+        _render_panel_line("Taxable Social Security", _format_currency(social_security.taxable_social_security), 232),
+        _render_panel_line("Tax-free Social Security", _format_currency(social_security.tax_free_social_security), 260),
+        _render_panel_line("Taxable percentage", _format_rate(
+            social_security.taxable_social_security / social_security.total_social_security
+            if social_security.total_social_security else 0.0
+        ), 288),
+        _render_panel_line("Provisional income", _format_currency(social_security.provisional_income), 316),
+        _text("panel-note", _PANEL_X + 16, 344, "Taxable amount is included in taxable ordinary income.") ,
+        _text("panel-note", _PANEL_X + 16, 360, "Tax-free amount is not included in taxable income."),
         "  </g>",
     ]
     return lines
@@ -129,19 +159,28 @@ def _render_social_security_panel(view_model: FederalTaxStackViewModel) -> list[
 
 def _render_niit_panel(view_model: FederalTaxStackViewModel) -> list[str]:
     niit = view_model.niit
+    if niit.niit_tax == 0.0:
+        return [
+            '  <g id="niit">',
+            f'    <rect class="panel niit-panel" x="{_PANEL_X}" y="375" width="{_PANEL_WIDTH}" height="88" />',
+            _text("panel-title", _PANEL_X + 16, 404, "NIIT notice / overlay"),
+            _text("panel-note", _PANEL_X + 16, 432, "NIIT does not apply in this scenario."),
+            _text("panel-note", _PANEL_X + 16, 450, "Separate overlay; not an income-stack layer."),
+            "  </g>",
+        ]
     lines = [
         f'  <g id="niit">',
-        f'    <rect class="panel niit-panel" x="{_PANEL_X}" y="355" '
+        f'    <rect class="panel niit-panel" x="{_PANEL_X}" y="375" '
         f'width="{_PANEL_WIDTH}" height="250" />',
-        _text("panel-title", _PANEL_X + 16, 384, "NIIT notice / overlay"),
-        _render_panel_line("Net investment income", _format_currency(niit.net_investment_income), 412),
-        _render_panel_line("MAGI", _format_currency(niit.magi), 436),
-        _render_panel_line("Threshold", _format_currency(niit.threshold_applied), 460),
-        _render_panel_line("MAGI over threshold", _format_currency(niit.magi_over_threshold), 484),
-        _render_panel_line("Tax base", _format_currency(niit.tax_base), 508),
-        _render_panel_line("NIIT rate", _format_rate(niit.niit_rate), 532),
-        _render_panel_line("NIIT tax", _format_currency(niit.niit_tax), 556),
-        _text("panel-note", _PANEL_X + 16, 584, "Overlay; not an income-stack layer."),
+        _text("panel-title", _PANEL_X + 16, 404, "NIIT notice / overlay"),
+        _render_panel_line("Net investment income", _format_currency(niit.net_investment_income), 432),
+        _render_panel_line("MAGI", _format_currency(niit.magi), 460),
+        _render_panel_line("Threshold", _format_currency(niit.threshold_applied), 488),
+        _render_panel_line("MAGI over threshold", _format_currency(niit.magi_over_threshold), 516),
+        _render_panel_line("Tax base", _format_currency(niit.tax_base), 544),
+        _render_panel_line("NIIT rate", _format_rate(niit.niit_rate), 572),
+        _render_panel_line("NIIT tax", _format_currency(niit.niit_tax), 600),
+        _text("panel-note", _PANEL_X + 16, 624, "Separate overlay; not an income-stack layer."),
         "  </g>",
     ]
     return lines
@@ -157,7 +196,12 @@ def render_federal_tax_stack_svg(
         _text("title", _LEFT, 34, f"Federal Tax Stack ({view_model.tax_year})"),
         _text("context", _LEFT, 60, "Federal-only scope"),
         *_render_scenario_summary(view_model),
-        _text("total", _LEFT, 178, f"Total federal tax: {_format_currency(view_model.total_federal_tax)}"),
+        '  <g id="top-left-tax-summary">',
+        _text("section-title", _LEFT, 336, "Federal tax summary"),
+        _text("total", _LEFT, 358, f"Total tax: {_format_currency(view_model.total_federal_tax)}"),
+        _text("context", _LEFT, 378, f"Marginal rate: {_format_rate(view_model.ordinary_marginal_layers[-1].rate if view_model.ordinary_marginal_layers else 0.0)}"),
+        _text("context", _LEFT, 396, f"Effective rate: {_format_rate(view_model.total_federal_tax / (view_model.ordinary_income + view_model.preferential_income + view_model.social_security.total_social_security + view_model.nontaxable_income) if (view_model.ordinary_income + view_model.preferential_income + view_model.social_security.total_social_security + view_model.nontaxable_income) else 0.0)} of total displayed income"),
+        "  </g>",
         "  <style>",
         "    .title { font: bold 24px sans-serif; fill: #202124; }",
         "    .context, .total, .section-title, .layer-label, .layer-value, .layer-tax, .empty, .panel-title, .panel-label, .panel-value, .panel-note { font: 14px sans-serif; fill: #202124; }",
@@ -175,22 +219,22 @@ def render_federal_tax_stack_svg(
     ]
 
     lines.append('  <g id="deduction-shielding">')
-    lines.append(_text("section-title", _STACK_X, 665, "Deduction / 0% shielding (conceptual zone)"))
+    lines.append(_text("section-title", _STACK_X, _STACK_BOTTOM, "Deduction relief zone (conceptual)"))
     lines.append(
-        f'    <rect class="shielding" x="{_STACK_X}" y="680" width="{_STACK_WIDTH}" height="44" />'
+        f'    <rect class="shielding" x="{_STACK_X}" y="{_STACK_BOTTOM + 15}" width="{_STACK_WIDTH}" height="44" />'
     )
-    lines.append(_text("layer-label", _STACK_X + 12, 698, "0% shielding"))
+    lines.append(_text("layer-label", _STACK_X + 12, _STACK_BOTTOM + 33, "Deduction relief"))
     lines.append(
         _text(
             "layer-value",
             _STACK_X + 12,
-            716,
-            "Conceptual shielding zone; allocation not specified",
+            _STACK_BOTTOM + 51,
+            "Conceptual zone; deduction is not allocated to a specific layer",
         )
     )
     lines.append("  </g>")
 
-    ordinary_top = 665 - len(view_model.ordinary_marginal_layers) * _ROW_HEIGHT
+    ordinary_top = _STACK_BOTTOM - len(view_model.ordinary_marginal_layers) * _ROW_HEIGHT
     if view_model.ordinary_marginal_layers:
         lines.append('  <g id="ordinary-layers">')
         lines.append(_text("section-title", _STACK_X, ordinary_top - 12, "Ordinary-income marginal layers"))
@@ -198,7 +242,7 @@ def render_federal_tax_stack_svg(
             lines.extend(
                 _render_layer(
                     "ordinary",
-                    f"Ordinary layer {index + 1}",
+                    f"{_format_rate(layer.rate)} tax bracket",
                     layer.rate,
                     layer.taxed_amount,
                     layer.tax_generated,
@@ -218,10 +262,10 @@ def render_federal_tax_stack_svg(
             lines.extend(
                 _render_layer(
                     "preferential",
-                    f"LTCG/QD layer {index + 1}",
+                    f"{_format_rate(layer.rate)} LTCG/QD tax bracket",
                     layer.rate,
                     layer.taxed_amount,
-                    None,
+                    layer.rate * layer.taxed_amount,
                     preferential_top + (len(view_model.preferential_rate_layers) - index - 1) * _ROW_HEIGHT,
                     "preferential",
                 )

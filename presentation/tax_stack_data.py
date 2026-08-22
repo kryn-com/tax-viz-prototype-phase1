@@ -38,6 +38,8 @@ def build_federal_tax_stack_view_model(
         ordinary_income=display_model.ordinary_income,
         taxable_ordinary_income=display_model.taxable_ordinary_income,
         preferential_income=display_model.preferential_income,
+        nontaxable_income=result.scenario.nontaxable_income,
+        deduction_mode=result.scenario.deduction_mode,
         deduction_shielding_amount=result.ordinary_output.deduction_applied,
         ordinary_marginal_layers=ordinary_marginal_layers,
         preferential_rate_layers=preferential_rate_layers,

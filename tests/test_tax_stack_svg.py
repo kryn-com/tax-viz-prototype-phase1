@@ -48,8 +48,10 @@ def test_render_tax_stack_svg_includes_headers_and_sections_in_order():
     labels = [
         "Federal Tax Stack",
         "Federal-only scope",
-        "Scenario inputs (audit target)",
-        "Deduction / 0% shielding",
+        "Scenario",
+        "Income summary",
+        "Federal tax summary",
+        "Deduction relief zone",
         "Ordinary-income marginal layers",
         "LTCG/QD rate layers",
         "Social Security explanation",
@@ -59,10 +61,44 @@ def test_render_tax_stack_svg_includes_headers_and_sections_in_order():
     assert [svg.index(label) for label in labels] == sorted(svg.index(label) for label in labels)
 
 
+def test_render_tax_stack_svg_keeps_stack_sections_below_income_summary():
+    svg = render_federal_tax_stack_svg(create_model())
+
+    summary_note_y = 294
+    ordinary_section_y = int(
+        re.search(
+            r'<text class="section-title" x="48" y="(\d+)">Ordinary-income marginal layers',
+            svg,
+        ).group(1)
+    )
+    preferential_section_y = int(
+        re.search(
+            r'<text class="section-title" x="48" y="(\d+)">LTCG/QD rate layers',
+            svg,
+        ).group(1)
+    )
+
+    assert ordinary_section_y > summary_note_y
+    assert preferential_section_y > summary_note_y
+
+
+def test_render_tax_stack_svg_separates_top_left_summary_blocks():
+    svg = render_federal_tax_stack_svg(create_model())
+
+    assert 'id="top-left-tax-summary"' in svg
+    assert 'x="48" y="132">Income summary' in svg
+    assert 'x="48" y="152">Source' in svg
+    assert 'x="300" y="152">Amount' in svg
+    assert 'x="48" y="336">Federal tax summary' in svg
+    assert 'x="48" y="300">Taxable Social Security is included in ordinary income; tax-free is not.' in svg
+    assert "Taxable Social Security is included in ordinary income above;" not in svg
+    assert "tax-free Social Security is included only in displayed total income." not in svg
+
+
 def test_render_tax_stack_svg_preserves_layer_order_and_formats_values():
     svg = render_federal_tax_stack_svg(create_model())
 
-    assert svg.index("Ordinary layer 1") < svg.index("Ordinary layer 2")
+    assert svg.index("10% tax bracket") < svg.index("12% tax bracket")
     ordinary_layer_positions = [
         int(position)
         for position in re.findall(
@@ -73,16 +109,22 @@ def test_render_tax_stack_svg_preserves_layer_order_and_formats_values():
     assert ordinary_layer_positions == sorted(ordinary_layer_positions, reverse=True)
     assert "10%" in svg
     assert "0.00%" not in svg
-    assert "$20,000.00" in svg
+    assert "$20,000" in svg
+    assert "$20,000.00" not in svg
+    assert "Marginal rate" in svg
+    assert "Effective rate" in svg
+    assert "of total displayed income" in svg
 
 
 def test_render_tax_stack_svg_omits_non_applicable_preferential_rates():
     svg = render_federal_tax_stack_svg(create_model())
 
-    assert "LTCG/QD layer 1" in svg
-    assert "LTCG/QD layer 2" not in svg
-    assert "LTCG/QD layer 3" not in svg
-    assert "15% | $20,000.00" in svg
+    assert "15% LTCG/QD tax bracket" in svg
+    assert "0% LTCG/QD tax bracket" not in svg
+    assert "20% LTCG/QD tax bracket" not in svg
+    assert "$20,000" in svg
+    assert "15% | $20,000" not in svg
+    assert "Tax $3,000" in svg
 
 
 def test_render_tax_stack_svg_includes_social_security_and_niit_content():
@@ -91,10 +133,23 @@ def test_render_tax_stack_svg_includes_social_security_and_niit_content():
     assert "Taxable Social Security" in svg
     assert "Tax-free Social Security" in svg
     assert "Provisional income" in svg
+    assert "NIIT does not apply in this scenario." in svg
+    assert "Separate overlay; not an income-stack layer." in svg
+
+
+def test_render_tax_stack_svg_shows_niit_details_when_niit_applies():
+    model = build_federal_tax_stack_view_model(
+        orchestrate_federal_tax(
+            create_scenario(ordinary_income=1_000_000.0, ltcg_qd_income=500_000.0)
+        )
+    )
+    svg = render_federal_tax_stack_svg(model)
+
     assert "Net investment income" in svg
     assert "MAGI over threshold" in svg
     assert "NIIT rate" in svg
-    assert "Overlay; not an income-stack layer." in svg
+    assert "NIIT tax" in svg
+    assert "Separate overlay; not an income-stack layer." in svg
 
 
 def test_render_tax_stack_svg_represents_zero_values_and_empty_layers():
@@ -105,8 +160,9 @@ def test_render_tax_stack_svg_represents_zero_values_and_empty_layers():
     )
     svg = render_federal_tax_stack_svg(zero_model)
 
-    assert "0% shielding" in svg
-    assert "Conceptual shielding zone; allocation not specified" in svg
+    assert "Deduction relief" in svg
+    assert "0% shielding" not in svg
+    assert "Conceptual zone; deduction is not allocated to a specific layer" in svg
     assert "$0.00 deduction applied" not in svg
     assert svg.count("No layers") == 2
 

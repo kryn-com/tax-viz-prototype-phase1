@@ -1,5 +1,5 @@
 import pytest
-from models.inputs import TaxScenarioInput, FilingStatus
+from models.inputs import DeductionMode, TaxScenarioInput, FilingStatus
 from engines.federal_ordinary import compute_federal_ordinary_tax
 
 def create_base_scenario(income: float, deduction: float, status: FilingStatus = FilingStatus.SINGLE) -> TaxScenarioInput:
@@ -69,3 +69,46 @@ def test_deterministic_repeated_runs():
     assert run_1.total_tax == run_2.total_tax
     assert run_1.taxable_ordinary_income == run_2.taxable_ordinary_income
     assert run_1.bracket_trace == run_2.bracket_trace
+
+
+def test_standard_deduction_single_is_resolved_from_2026_rules():
+    scenario = TaxScenarioInput(
+        tax_year=2026,
+        state_code="TX",
+        filing_status=FilingStatus.SINGLE,
+        ordinary_income=50000.0,
+        deduction_mode=DeductionMode.STANDARD,
+    )
+
+    result = compute_federal_ordinary_tax(scenario)
+
+    assert result.deduction_applied == 16100.0
+    assert result.taxable_ordinary_income == 33900.0
+
+
+def test_standard_deduction_married_filing_jointly_is_resolved_from_2026_rules():
+    scenario = TaxScenarioInput(
+        tax_year=2026,
+        state_code="TX",
+        filing_status=FilingStatus.MARRIED_FILING_JOINTLY,
+        ordinary_income=50000.0,
+        deduction_mode=DeductionMode.STANDARD,
+    )
+
+    result = compute_federal_ordinary_tax(scenario)
+
+    assert result.deduction_applied == 32200.0
+    assert result.taxable_ordinary_income == 17800.0
+
+
+def test_non_standard_deduction_amount_remains_unchanged():
+    scenario = create_base_scenario(
+        income=50000.0,
+        deduction=7000.0,
+    )
+    scenario = scenario.model_copy(update={"deduction_mode": DeductionMode.EXPLICIT})
+
+    result = compute_federal_ordinary_tax(scenario)
+
+    assert result.deduction_applied == 7000.0
+    assert result.taxable_ordinary_income == 43000.0

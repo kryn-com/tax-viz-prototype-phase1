@@ -1,7 +1,7 @@
 from models.outputs import BracketSlice, FederalOrdinaryOutput
 from models.inputs import TaxScenarioInput
 from rules.federal.year_2026 import get_brackets_for_status
-from engines.deductions import compute_taxable_ordinary_income
+from engines.deductions import compute_taxable_ordinary_income, resolve_deduction_amount
 
 def compute_federal_ordinary_tax(scenario: TaxScenarioInput) -> FederalOrdinaryOutput:
     """
@@ -10,9 +10,10 @@ def compute_federal_ordinary_tax(scenario: TaxScenarioInput) -> FederalOrdinaryO
     """
     
     # 1. Deductions application
+    deduction_amount = resolve_deduction_amount(scenario)
     taxable_income = compute_taxable_ordinary_income(
         ordinary_income=scenario.ordinary_income,
-        deduction_amount=scenario.deduction_amount
+        deduction_amount=deduction_amount
     )
     
     # 2. Fetch appropriate bracket rules
@@ -60,7 +61,7 @@ def compute_federal_ordinary_tax(scenario: TaxScenarioInput) -> FederalOrdinaryO
         
     return FederalOrdinaryOutput(
         ordinary_income=scenario.ordinary_income,
-        deduction_applied=scenario.deduction_amount,
+        deduction_applied=deduction_amount,
         taxable_ordinary_income=taxable_income,
         total_tax=total_tax,
         bracket_trace=trace

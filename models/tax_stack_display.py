@@ -5,7 +5,7 @@ from models.federal_display import (
     FederalDisplayBracketSlice,
     FederalDisplayRateSlice,
 )
-from models.inputs import FilingStatus
+from models.inputs import DeductionMode, FilingStatus
 
 
 @dataclass(frozen=True)
@@ -34,6 +34,8 @@ class FederalTaxStackViewModel:
     ordinary_income: float
     taxable_ordinary_income: float
     preferential_income: float
+    nontaxable_income: float
+    deduction_mode: DeductionMode
     deduction_shielding_amount: float
     ordinary_marginal_layers: Tuple[FederalDisplayBracketSlice, ...]
     preferential_rate_layers: Tuple[FederalDisplayRateSlice, ...]

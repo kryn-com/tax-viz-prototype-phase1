@@ -6,6 +6,14 @@ class BracketDef(TypedDict):
     lower: float
     upper: Optional[float]
 
+
+STANDARD_DEDUCTIONS_2026: Dict[FilingStatus, float] = {
+    FilingStatus.SINGLE: 16100.0,
+    FilingStatus.MARRIED_FILING_JOINTLY: 32200.0,
+    FilingStatus.MARRIED_FILING_SEPARATELY: 16100.0,
+    FilingStatus.HEAD_OF_HOUSEHOLD: 24150.0,
+}
+
 # Provisional extrapolated brackets for 2026 to satisfy engine testing.
 # These represent the structure of US Federal Income Tax brackets.
 BRACKETS_2026: Dict[FilingStatus, List[BracketDef]] = {
@@ -52,3 +60,10 @@ def get_brackets_for_status(filing_status: FilingStatus) -> List[BracketDef]:
     if filing_status not in BRACKETS_2026:
         raise ValueError(f"No 2026 brackets defined for {filing_status}")
     return BRACKETS_2026[filing_status]
+
+
+def get_standard_deduction(filing_status: FilingStatus) -> float:
+    """Return the 2026 standard deduction for a filing status."""
+    if filing_status not in STANDARD_DEDUCTIONS_2026:
+        raise ValueError(f"No 2026 standard deduction defined for {filing_status}")
+    return STANDARD_DEDUCTIONS_2026[filing_status]

@@ -177,6 +177,12 @@ def main() -> int:
     )
     for summary in summaries:
         print(f"{summary['scenario_id']}: {summary['status']}")
+        if summary["status"] == "passed":
+            artifact_dir = (args.output_dir / summary["scenario_id"]).resolve()
+            svg_path = artifact_dir / "tax_stack.svg"
+            print(f"  result.json: {artifact_dir / 'result.json'}")
+            print(f"  tax_stack.svg: {svg_path}")
+            print(f"  URL: {svg_path.as_uri()}")
     return 0 if all(summary["status"] == "passed" for summary in summaries) else 1
 
 

@@ -33,6 +33,8 @@ def test_build_federal_tax_stack_view_model_maps_complete_result():
     assert model.ordinary_income == result.ordinary_output.ordinary_income
     assert model.taxable_ordinary_income == result.taxable_ordinary_income
     assert model.preferential_income == result.taxable_preferential_income
+    assert model.nontaxable_income == result.scenario.nontaxable_income
+    assert model.deduction_mode is result.scenario.deduction_mode
     assert model.deduction_shielding_amount == result.ordinary_output.deduction_applied
     assert model.agi == result.agi
     assert model.magi == result.magi

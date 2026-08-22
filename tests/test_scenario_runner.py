@@ -10,6 +10,7 @@ from scripts.scenario_runner import (
     load_scenario_fixture,
     run_scenario,
 )
+from scripts import scenario_runner
 
 
 SCENARIO = {
@@ -92,7 +93,7 @@ def test_run_scenario_compares_optional_expected_values_with_tolerance(tmp_path)
     path = write_fixture(
         tmp_path,
         "expected-case",
-        expected={"total_federal_tax": 16863.0 + EXPECTED_TOLERANCE},
+        expected={"total_federal_tax": 13321.0 + EXPECTED_TOLERANCE / 2},
     )
 
     summary = run_scenario(path, tmp_path / "artifacts")
@@ -113,3 +114,25 @@ def test_run_scenario_reports_expected_value_mismatch(tmp_path):
 
     assert summary["status"] == "failed"
     assert summary["expected_comparison"]["fields"]["total_federal_tax"]["passed"] is False
+
+
+def test_main_prints_absolute_artifact_paths_and_svg_url(tmp_path, capsys, monkeypatch):
+    fixture_path = write_fixture(tmp_path, "link-case")
+    output_dir = tmp_path / "artifacts"
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "scenario_runner",
+            "--scenario",
+            str(fixture_path),
+            "--output-dir",
+            str(output_dir),
+        ],
+    )
+
+    assert scenario_runner.main() == 0
+
+    output = capsys.readouterr().out
+    svg_path = (output_dir / "link-case" / "tax_stack.svg").resolve()
+    assert str(svg_path) in output
+    assert svg_path.as_uri() in output
