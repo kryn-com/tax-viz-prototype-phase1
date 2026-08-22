@@ -2,7 +2,7 @@ from dataclasses import FrozenInstanceError
 
 import pytest
 
-from engines.state_policy import classify_state, require_supported_state
+from engines.state_policy import STATE_SUPPORT_POLICY, classify_state, require_supported_state
 from models.inputs import FilingStatus
 from models.state import (
     StateTaxRequest,
@@ -10,6 +10,7 @@ from models.state import (
     StateTaxSupport,
     UnsupportedStateError,
 )
+from rules.state_policy import STATE_TAX_RATES_2026
 
 
 def test_classifies_explicit_flat_tax_state():
@@ -18,6 +19,16 @@ def test_classifies_explicit_flat_tax_state():
     assert classify_state("IL") is StateTaxSupport.FLAT_TAX
     assert classify_state("IN") is StateTaxSupport.FLAT_TAX
     assert require_supported_state("pa") is StateTaxSupport.FLAT_TAX
+
+
+def test_flat_tax_policy_has_numeric_rate_for_every_supported_flat_tax_state():
+    flat_tax_states = {
+        state_code
+        for state_code, support in STATE_SUPPORT_POLICY.items()
+        if support is StateTaxSupport.FLAT_TAX
+    }
+
+    assert flat_tax_states <= STATE_TAX_RATES_2026.keys()
 
 
 def test_classifies_explicit_no_income_tax_states():

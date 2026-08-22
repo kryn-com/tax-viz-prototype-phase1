@@ -34,9 +34,11 @@ def test_flat_tax_known_base_calculation(state_code, rate):
     assert result.state_tax_amount == pytest.approx(100000.0 * rate)
 
 
-def test_pa_zero_base():
-    result = compute_state_tax(create_state_request("PA", 0.0))
+@pytest.mark.parametrize("state_code", ["PA", "NC", "IL", "IN"])
+def test_all_flat_tax_states_return_zero_for_zero_base(state_code):
+    result = compute_state_tax(create_state_request(state_code, 0.0))
 
+    assert result.support is StateTaxSupport.FLAT_TAX
     assert result.state_tax_amount == 0.0
 
 
@@ -46,6 +48,13 @@ def test_no_income_tax_states_return_explicit_zero(state_code):
 
     assert result.support is StateTaxSupport.NO_INCOME_TAX
     assert result.state_tax_amount == 0.0
+
+
+def test_state_tax_normalizes_supported_state_code_case():
+    result = compute_state_tax(create_state_request("nc", 100000.0))
+
+    assert result.support is StateTaxSupport.FLAT_TAX
+    assert result.state_tax_amount == pytest.approx(3990.0)
 
 
 @pytest.mark.parametrize("state_code", ["MI", "ZZ"])
@@ -70,6 +79,15 @@ def test_result_preserves_request_and_filing_status():
 
     assert result.request is request
     assert result.request.filing_status is FilingStatus.MARRIED_FILING_JOINTLY
+
+
+def test_state_tax_does_not_mutate_request():
+    request = create_state_request("PA", 50000.0)
+    original_values = request.__dict__.copy()
+
+    compute_state_tax(request)
+
+    assert request.__dict__ == original_values
 
 
 def test_repeated_calculations_are_deterministic():

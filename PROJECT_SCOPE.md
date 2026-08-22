@@ -8,7 +8,9 @@ This document is the durable source of truth for future development sessions and
 
 ## Current Status
 
-Phases 1 through 12 are complete in the current prototype.
+Phases 1 through 13 are complete in the current prototype.
+
+Phase 13 hardened the isolated state-contract and state-tax policy tests. No production code changed, and the full test suite passed with 90 tests.
 
 Phase 3 was merged through PR #1. The full test suite passed locally after the merge:
 
@@ -119,7 +121,7 @@ Do not add user inputs unless they are required to reconcile an already-existing
 
 ## Next-Phase Planning
 
-No Phase 13 implementation scope has been approved yet.
+No Phase 14 implementation scope has been approved yet.
 
 Before selecting or implementing a next phase:
 
