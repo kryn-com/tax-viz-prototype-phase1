@@ -8,18 +8,34 @@ This document is the durable source of truth for future development sessions and
 
 ## Current Status
 
-Phases 1 through 15 are complete in the current prototype.
+Phases 1 through 21 are complete in the current prototype.
 
-Phase 13 hardened the isolated state-contract and state-tax policy tests. No production code changed, and the full test suite passed with 90 tests.
+Phase 13 completed state-contract and state-tax policy test hardening. No production code changed, and the full test suite passed with 90 tests.
 
-Phase 14 completed the Federal Display Model: a deterministic federal-only display-model layer for future visualization work. No tax logic recalculation changes were made, and the full test suite passed with 95 tests.
+Phase 14 added the Federal Display Model, a deterministic federal-only display-model layer for future visualization work. No tax logic recalculation changes were made, and the full test suite passed with 95 tests.
 
-Phase 15 completed the Federal Display Text Demo: a pure deterministic text formatter that consumes `FederalDisplayModel`. No tax logic recalculation changes were made; the focused tests passed with 3 tests, and the full suite passed with 98 tests.
+Phase 15 added deterministic federal display text formatting that consumes the Federal Display Model. No tax logic recalculation changes were made; the focused tests passed with 3 tests, and the full suite passed with 98 tests.
 
-Phase 3 was merged through PR #1. The full test suite passed locally after the merge:
+Phase 16 added deterministic federal sliver display models and text summaries for ordinary-income, LTCG/QD, and combined-income sliver results.
+
+Phase 17 added baseline and altered federal component breakdowns for ordinary tax, LTCG/QD tax, NIIT, and total federal tax.
+
+Phase 18 hardened the sliver presentation contract through focused tests covering component mapping, backward-compatible construction, incomplete optional data, delta arithmetic, formatting, and determinism. No production code changed in this phase.
+
+Phase 19 added an immutable, chart-library-neutral federal chart view model containing ordered tax-component, ordinary-bracket, and preferential-rate segments.
+
+Phase 20 added a deterministic renderer that converts the federal chart view model into a standalone SVG without a chart-library dependency.
+
+Phase 21 added a predefined, non-interactive federal scenario demo that runs the existing pipeline and writes a standalone SVG chart.
+
+The current end-to-end capability is:
 
 ```text
-33 passed in 0.11s
+predefined TaxScenarioInput
+-> federal tax orchestration
+-> federal display model
+-> federal chart view model
+-> standalone deterministic SVG chart
 ```
 
 The current repository remains a prototype. Its outputs must stay deterministic, side-effect free, auditable, and test-led.
@@ -96,61 +112,90 @@ The deductions helper returns a scalar taxable-ordinary-income value. It does no
 
 ## Current Constraints
 
-The following are deliberately out of scope for the current federal prototype:
+The following remain outside the current approved product scope:
 
-- Married Filing Separately calculations; engines must reject MFS clearly rather than calculate it
+- User-entered scenario variables and interactive application behavior
+- Baseline tax-stack view-model and renderer work beyond the current federal chart surface
+- General-purpose CLI behavior, serialization, export architecture, and chart-library integration
 - Progressive and multi-bracket state income-tax calculations
-- IRMAA calculations
+- IRMAA calculations or Medicare-premium determinations
 - Tax credits
 - Alternative Minimum Tax
 - Payroll tax, self-employment tax, and business-entity taxation
 - Tax filing, e-file, return preparation, or legal-tax-advice functionality
 - Complex gain/loss netting
 - Multi-state taxation
-- UI, API, web framework, Streamlit, FastAPI, Plotly, charts, or presentation-layer implementation
+- Federal-state tax integration
+- Interactive sliver visualization
+- Broader scenario catalogs beyond the predefined demonstration scenario
 
-Do not add user inputs unless they are required to reconcile an already-existing engine interface. Do not silently invent deduction allocation, income characterization, or tax-treatment rules.
+Do not silently invent deduction allocation, income characterization, state-tax treatment, IRMAA assumptions, or other tax-treatment rules.
 
 ## Design Decisions
 
 - The project is an analytical and explanatory model, not a filing product.
 - The federal core must remain deterministic, side-effect free, typed, traceable, and test-led.
 - Each major calculation engine must retain enough structured output to explain its result.
-- Tax logic must remain separate from future presentation logic.
-- State tax remains separate from federal tax and is not integrated into `FederalTaxResult`.
+- Federal tax logic must remain separate from presentation logic.
+- State tax remains separate from federal tax and must have its own display adapter or visual zone rather than being folded into federal tax results.
+- IRMAA remains a separate future economic Medicare-surcharge overlay, not federal income tax.
+- Taxable Social Security explanation and NIIT notices or overlays are semantic presentation elements of the baseline federal tax-stack view model.
 - LTCG and qualified dividends remain one combined preferential-income input for this prototype.
-- Social Security, preferential-income, and NIIT threshold values currently remain in their respective engines to avoid prototype scope creep.
-- Centralizing thresholds into year-rule tables is a future maintenance improvement, not current work.
+- Chart view models remain immutable, deterministic, and independent of any specific chart library.
+- Future marginal and sliver analyses must recompute the full applicable federal pipeline for each altered scenario. They must not shortcut a single tax module.
+- Every future phase must be separately approved, narrow, deterministic, auditable, and test-led.
 - Work proceeds in small, testable phases with no broad redesigns.
 
 ## Next-Phase Planning
 
-No Phase 16 implementation scope has been approved yet.
+No future phase is approved by this document. The following roadmap is directional and non-binding:
 
-Before selecting or implementing a next phase:
+1. Baseline tax-stack view model, including taxable Social Security explanation and NIIT notices or overlays as required semantic elements
+2. Baseline tax-stack renderer
+3. Separate state-tax display adapter and visual zone
+4. Separate IRMAA economic-overlay module
+5. Sliver and marginal chart view models
+6. Sliver renderer
+7. Controlled scenario catalog
+8. Future user-input boundary and interactive application shell
 
-1. Read the current source code, tests, this document, and `PHASE_15_HANDOFF.md`.
+Each roadmap item requires its own written approval and focused handoff before implementation.
+
+Before selecting or implementing a future phase:
+
+1. Read the current source code, tests, this document, and the newest phase handoff.
 2. Identify one narrow, testable objective.
 3. Write or update the phase proposal before coding.
-4. Verify real callable signatures, result types, and existing tests before proposing adapters.
-5. Do not alter completed tax formulas or engine interfaces without an explicit approved scope change.
-
-Potential future capabilities may include fuller deduction modeling, centralized federal year-rule tables, additional trace/reconciliation support, carefully bounded state-tax expansion, IRMAA as a separate economic overlay, or a presentation layer. These are possibilities only, not approved implementation instructions.
+4. Verify real callable signatures, result types, and existing tests.
+5. Preserve the federal, state-tax, presentation, and IRMAA boundaries.
+6. Do not alter completed tax formulas or engine interfaces without an explicit approved scope change.
 
 ## Long-Term Product Vision
 
-The eventual product may accept a compact scenario containing age, filing status, ordinary income, combined LTCG/QD income, Social Security income, deduction selection or amount, nontaxable income, and later state or Medicare assumptions.
+The eventual product may accept user-entered scenario variables such as age, filing status, ordinary income, combined LTCG/QD income, Social Security income, deduction selection or amount, nontaxable income, state assumptions, and later Medicare-related assumptions.
 
-A future presentation layer may explain:
+The baseline tax-stack view model should semantically represent:
 
-- Main income-and-tax stack
-- Deduction shielding
-- Taxable Social Security
-- Ordinary-income bracket slices
-- LTCG/QD preferential-rate slices
-- Future state-tax and threshold markers
-- Marginal “sliver” analyses for incremental ordinary income, LTCG/QD income, and both combined
+- The baseline income-and-tax stack
+- A deduction or 0% shielding zone
+- Ordinary marginal-rate layers
+- LTCG/QD rate layers stacked above ordinary income
+- An explanation of taxable Social Security
+- NIIT notices or overlays
 
-Future sliver analysis must recompute the full federal pipeline for each altered scenario. It must not shortcut a single tax module.
+The baseline renderer should present those federal semantic elements visually. Taxable Social Security explanation and NIIT notices or overlays are part of the baseline tax-stack view-model contract; they do not require separate modules before baseline rendering.
 
-State tax and IRMAA must remain separate future modules. IRMAA must always be represented as an economic Medicare-surcharge overlay, never as federal income tax.
+State tax should be represented through a separate display adapter and separate state-tax visual zone. It should not be folded into the federal tax stack.
+
+IRMAA should be added later as a separate economic-overlay module. It should be shown as a Medicare-surcharge effect, never as federal income tax.
+
+The product may also provide marginal or sliver analysis for:
+
+- Additional ordinary income
+- Additional LTCG/QD income
+- Roth conversions
+- Deferral decisions
+
+Federal tax logic, state tax, presentation, and IRMAA must remain distinct architectural concerns. Federal tax calculations should feed presentation models; state tax should use a separate tax and display boundary; and IRMAA should be represented as an economic Medicare-surcharge overlay rather than federal income tax.
+
+This vision is directional only. It does not approve implementation of user inputs, interactive UI, state integration, IRMAA calculations, or any other future capability.
