@@ -8,6 +8,7 @@ from scripts.scenario_runner import (
     EXPECTED_TOLERANCE,
     discover_scenario_paths,
     load_scenario_fixture,
+    run_all_scenarios,
     run_scenario,
 )
 from scripts import scenario_runner
@@ -136,3 +137,18 @@ def test_main_prints_absolute_artifact_paths_and_svg_url(tmp_path, capsys, monke
     svg_path = (output_dir / "link-case" / "tax_stack.svg").resolve()
     assert str(svg_path) in output
     assert svg_path.as_uri() in output
+
+def test_run_all_repository_scenarios_pass(tmp_path):
+    scenario_dir = Path("scenarios/cases")
+    summaries = run_all_scenarios(scenario_dir, tmp_path / "artifacts")
+
+    scenario_ids = [summary["scenario_id"] for summary in summaries]
+
+    assert scenario_ids == [
+        "high-income-niit",
+        "hoh-ordinary-only",
+        "mf-joint-ordinary-only",
+        "single-baseline",
+        "zero-income",
+    ]
+    assert all(summary["status"] == "passed" for summary in summaries)
