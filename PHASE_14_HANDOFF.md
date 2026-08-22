@@ -14,6 +14,7 @@ Add a pure typed adapter that maps an existing `FederalTaxResult` into a frozen 
 - `presentation/__init__.py`
 - `presentation/federal_display.py`
 - `tests/test_federal_display.py`
+- `PHASE_14_HANDOFF.md`
 
 ## Tests Added
 

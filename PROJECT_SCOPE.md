@@ -8,9 +8,11 @@ This document is the durable source of truth for future development sessions and
 
 ## Current Status
 
-Phases 1 through 13 are complete in the current prototype.
+Phases 1 through 14 are complete in the current prototype.
 
 Phase 13 hardened the isolated state-contract and state-tax policy tests. No production code changed, and the full test suite passed with 90 tests.
+
+Phase 14 completed the Federal Display Model: a deterministic federal-only display-model layer for future visualization work. No tax logic recalculation changes were made, and the full test suite passed with 95 tests.
 
 Phase 3 was merged through PR #1. The full test suite passed locally after the merge:
 
@@ -121,11 +123,11 @@ Do not add user inputs unless they are required to reconcile an already-existing
 
 ## Next-Phase Planning
 
-No Phase 14 implementation scope has been approved yet.
+No Phase 15 implementation scope has been approved yet.
 
 Before selecting or implementing a next phase:
 
-1. Read the current source code, tests, this document, and `PHASE_3_HANDOFF.md`.
+1. Read the current source code, tests, this document, and `PHASE_14_HANDOFF.md`.
 2. Identify one narrow, testable objective.
 3. Write or update the phase proposal before coding.
 4. Verify real callable signatures, result types, and existing tests before proposing adapters.
