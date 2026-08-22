@@ -22,4 +22,20 @@ def render_federal_sliver_summary(model: FederalSliverDisplayModel) -> str:
             f"LTCG/QD income increment: {_format_currency(model.ltcg_qd_income_increment)}"
         )
 
+    if model.baseline_breakdown is not None and model.altered_breakdown is not None:
+        lines.extend(
+            [
+                "Federal tax components:",
+                f"- baseline ordinary tax: {_format_currency(model.baseline_breakdown.ordinary_tax)}",
+                f"- altered ordinary tax: {_format_currency(model.altered_breakdown.ordinary_tax)}",
+                f"- ordinary tax delta: {_format_currency(model.altered_breakdown.ordinary_tax - model.baseline_breakdown.ordinary_tax)}",
+                f"- baseline LTCG/QD tax: {_format_currency(model.baseline_breakdown.ltcg_qd_tax)}",
+                f"- altered LTCG/QD tax: {_format_currency(model.altered_breakdown.ltcg_qd_tax)}",
+                f"- LTCG/QD tax delta: {_format_currency(model.altered_breakdown.ltcg_qd_tax - model.baseline_breakdown.ltcg_qd_tax)}",
+                f"- baseline NIIT tax: {_format_currency(model.baseline_breakdown.niit_tax)}",
+                f"- altered NIIT tax: {_format_currency(model.altered_breakdown.niit_tax)}",
+                f"- NIIT tax delta: {_format_currency(model.altered_breakdown.niit_tax - model.baseline_breakdown.niit_tax)}",
+            ]
+        )
+
     return "\n".join(lines)

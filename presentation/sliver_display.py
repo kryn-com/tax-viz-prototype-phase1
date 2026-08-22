@@ -3,7 +3,10 @@ from models.outputs import (
     FederalLTCGQDSLiverResult,
     FederalSliverResult,
 )
-from models.sliver_display import FederalSliverDisplayModel
+from models.sliver_display import (
+    FederalSliverDisplayModel,
+    FederalSliverTaxBreakdown,
+)
 
 
 def _build_model(
@@ -23,6 +26,18 @@ def _build_model(
         federal_tax_delta=result.federal_tax_delta,
         ordinary_income_increment=ordinary_income_increment,
         ltcg_qd_income_increment=ltcg_qd_income_increment,
+        baseline_breakdown=FederalSliverTaxBreakdown(
+            ordinary_tax=result.baseline_result.ordinary_tax,
+            ltcg_qd_tax=result.baseline_result.ltcg_qd_tax,
+            niit_tax=result.baseline_result.niit_tax,
+            total_federal_tax=result.baseline_result.total_federal_tax,
+        ),
+        altered_breakdown=FederalSliverTaxBreakdown(
+            ordinary_tax=result.altered_result.ordinary_tax,
+            ltcg_qd_tax=result.altered_result.ltcg_qd_tax,
+            niit_tax=result.altered_result.niit_tax,
+            total_federal_tax=result.altered_result.total_federal_tax,
+        ),
     )
 
 
