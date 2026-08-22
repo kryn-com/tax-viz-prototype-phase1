@@ -14,5 +14,12 @@
     "nontaxable_income": 0.0,
     "deduction_mode": "standard",
     "deduction_amount": 0.0
-  }
+  },
+ "expected": {
+  "taxable_ordinary_income": 87800.0,
+  "ordinary_tax": 10040.0,
+  "ltcg_qd_tax": 0.0,
+  "niit_tax": 0.0,
+  "total_federal_tax": 10040.0
+}
 }
