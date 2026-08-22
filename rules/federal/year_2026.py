@@ -27,13 +27,13 @@ BRACKETS_2026: Dict[FilingStatus, List[BracketDef]] = {
        {"rate": 0.37, "lower": 640600.0, "upper": None},
     ],
     FilingStatus.MARRIED_FILING_JOINTLY: [
-        {"rate": 0.10, "lower": 0.0, "upper": 23200.0},
-        {"rate": 0.12, "lower": 23200.0, "upper": 94300.0},
-        {"rate": 0.22, "lower": 94300.0, "upper": 201050.0},
-        {"rate": 0.24, "lower": 201050.0, "upper": 383900.0},
-        {"rate": 0.32, "lower": 383900.0, "upper": 487450.0},
-        {"rate": 0.35, "lower": 487450.0, "upper": 731200.0},
-        {"rate": 0.37, "lower": 731200.0, "upper": None},
+        {"rate": 0.10, "lower": 0.0, "upper": 24800.0},
+        {"rate": 0.12, "lower": 24800.0, "upper": 100800.0},
+        {"rate": 0.22, "lower": 100800.0, "upper": 211400.0},
+        {"rate": 0.24, "lower": 211400.0, "upper": 403550.0},
+        {"rate": 0.32, "lower": 403550.0, "upper": 512450.0},
+        {"rate": 0.35, "lower": 512450.0, "upper": 768700.0},
+        {"rate": 0.37, "lower": 768700.0, "upper": None},
     ],
     FilingStatus.MARRIED_FILING_SEPARATELY: [
         {"rate": 0.10, "lower": 0.0, "upper": 11600.0},
@@ -45,14 +45,14 @@ BRACKETS_2026: Dict[FilingStatus, List[BracketDef]] = {
         {"rate": 0.37, "lower": 365600.0, "upper": None},
     ],
     FilingStatus.HEAD_OF_HOUSEHOLD: [
-        {"rate": 0.10, "lower": 0.0, "upper": 16550.0},
-        {"rate": 0.12, "lower": 16550.0, "upper": 63100.0},
-        {"rate": 0.22, "lower": 63100.0, "upper": 100500.0},
-        {"rate": 0.24, "lower": 100500.0, "upper": 191950.0},
-        {"rate": 0.32, "lower": 191950.0, "upper": 243700.0},
-        {"rate": 0.35, "lower": 243700.0, "upper": 609300.0},
-        {"rate": 0.37, "lower": 609300.0, "upper": None},
-    ]
+        {"rate": 0.10, "lower": 0.0, "upper": 17700.0},
+        {"rate": 0.12, "lower": 17700.0, "upper": 67450.0},
+        {"rate": 0.22, "lower": 67450.0, "upper": 105700.0},
+        {"rate": 0.24, "lower": 105700.0, "upper": 201775.0},
+        {"rate": 0.32, "lower": 201775.0, "upper": 256200.0},
+        {"rate": 0.35, "lower": 256200.0, "upper": 640600.0},
+        {"rate": 0.37, "lower": 640600.0, "upper": None},
+    ],
 }
 
 def get_brackets_for_status(filing_status: FilingStatus) -> List[BracketDef]:

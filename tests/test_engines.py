@@ -34,31 +34,74 @@ def test_positive_taxable_income_one_bracket():
     assert result.bracket_trace[1].taxed_amount == 0.0
 
 def test_taxable_income_spanning_multiple_brackets():
-    # taxable = 60000 (Single)
-    # Brackets: 10% up to 11600 (1160 tax)
-    #           12% 11600 to 47150 (35550 * 0.12 = 4266 tax)
-    #           22% 47150 to 100525 (12850 * 0.22 = 2827 tax)
-    # Total = 1160 + 4266 + 2827 = 8253
+    # Taxable = $60,000 (Single).
+    # 10%: $0 to $12,400 -> $1,240
+    # 12%: $12,400 to $50,400 -> $4,560
+    # 22%: $50,400 to $60,000 -> $2,112
+    # Total = $7,912.
     scenario = create_base_scenario(income=70000, deduction=10000)
     result = compute_federal_ordinary_tax(scenario)
-    
+
     assert result.taxable_ordinary_income == 60000.0
-    assert pytest.approx(result.total_tax, 0.01) == 8253.0
-    
-    assert result.bracket_trace[0].taxed_amount == 11600.0
-    assert result.bracket_trace[1].taxed_amount == 35550.0
-    assert result.bracket_trace[2].taxed_amount == 12850.0
+    assert result.total_tax == pytest.approx(7912.0)
+
+    assert result.bracket_trace[0].taxed_amount == 12400.0
+    assert result.bracket_trace[1].taxed_amount == 38000.0
+    assert result.bracket_trace[2].taxed_amount == 9600.0
     assert result.bracket_trace[3].taxed_amount == 0.0
 
 def test_exact_threshold_boundary():
-    # Exactly on the line of the first bracket (11600)
-    scenario = create_base_scenario(income=11600, deduction=0)
+    # Exactly on the 2026 single 10% bracket ceiling.
+    scenario = create_base_scenario(income=12400, deduction=0)
     result = compute_federal_ordinary_tax(scenario)
-    
-    assert result.taxable_ordinary_income == 11600.0
-    assert result.total_tax == 1160.0
-    assert result.bracket_trace[0].taxed_amount == 11600.0
+
+    assert result.taxable_ordinary_income == 12400.0
+    assert result.total_tax == 1240.0
+    assert result.bracket_trace[0].taxed_amount == 12400.0
     assert result.bracket_trace[1].taxed_amount == 0.0
+
+def test_married_filing_jointly_taxable_income_spanning_multiple_brackets():
+    # Taxable = $120,000 (MFJ).
+    # 10%: $0 to $24,800 -> $2,480
+    # 12%: $24,800 to $100,800 -> $9,120
+    # 22%: $100,800 to $120,000 -> $4,224
+    # Total = $15,824.
+    scenario = create_base_scenario(
+        income=120000.0,
+        deduction=0.0,
+        status=FilingStatus.MARRIED_FILING_JOINTLY,
+    )
+    result = compute_federal_ordinary_tax(scenario)
+
+    assert result.taxable_ordinary_income == 120000.0
+    assert result.total_tax == pytest.approx(15824.0)
+
+    assert result.bracket_trace[0].taxed_amount == 24800.0
+    assert result.bracket_trace[1].taxed_amount == 76000.0
+    assert result.bracket_trace[2].taxed_amount == 19200.0
+    assert result.bracket_trace[3].taxed_amount == 0.0
+
+def test_head_of_household_taxable_income_spanning_multiple_brackets():
+    # Taxable = $120,000 (HOH).
+    # 10%: $0 to $17,700 -> $1,770
+    # 12%: $17,700 to $67,450 -> $5,970
+    # 22%: $67,450 to $105,700 -> $8,415
+    # 24%: $105,700 to $120,000 -> $3,432
+    # Total = $19,587.
+    scenario = create_base_scenario(
+        income=120000.0,
+        deduction=0.0,
+        status=FilingStatus.HEAD_OF_HOUSEHOLD,
+    )
+    result = compute_federal_ordinary_tax(scenario)
+
+    assert result.taxable_ordinary_income == 120000.0
+    assert result.total_tax == pytest.approx(19587.0)
+
+    assert result.bracket_trace[0].taxed_amount == 17700.0
+    assert result.bracket_trace[1].taxed_amount == 49750.0
+    assert result.bracket_trace[2].taxed_amount == 38250.0
+    assert result.bracket_trace[3].taxed_amount == 14300.0
 
 def test_deterministic_repeated_runs():
     scenario = create_base_scenario(income=200000, deduction=15000, status=FilingStatus.MARRIED_FILING_JOINTLY)

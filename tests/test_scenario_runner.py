@@ -93,7 +93,7 @@ def test_run_scenario_compares_optional_expected_values_with_tolerance(tmp_path)
     path = write_fixture(
         tmp_path,
         "expected-case",
-        expected={"total_federal_tax": 13321.0 + EXPECTED_TOLERANCE / 2},
+        expected={"total_federal_tax": 12980.0 + EXPECTED_TOLERANCE / 2},
     )
 
     summary = run_scenario(path, tmp_path / "artifacts")
