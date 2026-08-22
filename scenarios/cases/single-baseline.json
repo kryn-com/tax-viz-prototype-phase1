@@ -15,8 +15,8 @@
     "deduction_amount": 0.0
   },
   "expected": {
-    "total_federal_tax": 16863.0,
-    "ordinary_tax": 13863.0,
+    "total_federal_tax": 12980.0,
+    "ordinary_tax": 9980.0,
     "ltcg_qd_tax": 3000.0,
     "niit_tax": 0.0
   }

@@ -18,13 +18,13 @@ STANDARD_DEDUCTIONS_2026: Dict[FilingStatus, float] = {
 # These represent the structure of US Federal Income Tax brackets.
 BRACKETS_2026: Dict[FilingStatus, List[BracketDef]] = {
     FilingStatus.SINGLE: [
-        {"rate": 0.10, "lower": 0.0, "upper": 11600.0},
-        {"rate": 0.12, "lower": 11600.0, "upper": 47150.0},
-        {"rate": 0.22, "lower": 47150.0, "upper": 100525.0},
-        {"rate": 0.24, "lower": 100525.0, "upper": 191950.0},
-        {"rate": 0.32, "lower": 191950.0, "upper": 243725.0},
-        {"rate": 0.35, "lower": 243725.0, "upper": 609350.0},
-        {"rate": 0.37, "lower": 609350.0, "upper": None},
+       {"rate": 0.10, "lower": 0.0, "upper": 12400.0},
+       {"rate": 0.12, "lower": 12400.0, "upper": 50400.0},
+       {"rate": 0.22, "lower": 50400.0, "upper": 105700.0},
+       {"rate": 0.24, "lower": 105700.0, "upper": 201775.0},
+       {"rate": 0.32, "lower": 201775.0, "upper": 256225.0},
+       {"rate": 0.35, "lower": 256225.0, "upper": 640600.0},
+       {"rate": 0.37, "lower": 640600.0, "upper": None},
     ],
     FilingStatus.MARRIED_FILING_JOINTLY: [
         {"rate": 0.10, "lower": 0.0, "upper": 23200.0},
