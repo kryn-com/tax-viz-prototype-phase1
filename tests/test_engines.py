@@ -103,6 +103,33 @@ def test_head_of_household_taxable_income_spanning_multiple_brackets():
     assert result.bracket_trace[2].taxed_amount == 38250.0
     assert result.bracket_trace[3].taxed_amount == 14300.0
 
+def test_married_filing_jointly_exact_first_threshold_boundary():
+    scenario = create_base_scenario(
+        income=24800.0,
+        deduction=0.0,
+        status=FilingStatus.MARRIED_FILING_JOINTLY,
+    )
+    result = compute_federal_ordinary_tax(scenario)
+
+    assert result.taxable_ordinary_income == 24800.0
+    assert result.total_tax == 2480.0
+    assert result.bracket_trace[0].taxed_amount == 24800.0
+    assert result.bracket_trace[1].taxed_amount == 0.0
+
+
+def test_head_of_household_exact_first_threshold_boundary():
+    scenario = create_base_scenario(
+        income=17700.0,
+        deduction=0.0,
+        status=FilingStatus.HEAD_OF_HOUSEHOLD,
+    )
+    result = compute_federal_ordinary_tax(scenario)
+
+    assert result.taxable_ordinary_income == 17700.0
+    assert result.total_tax == 1770.0
+    assert result.bracket_trace[0].taxed_amount == 17700.0
+    assert result.bracket_trace[1].taxed_amount == 0.0
+
 def test_deterministic_repeated_runs():
     scenario = create_base_scenario(income=200000, deduction=15000, status=FilingStatus.MARRIED_FILING_JOINTLY)
     
