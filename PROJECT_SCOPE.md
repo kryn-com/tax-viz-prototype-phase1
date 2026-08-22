@@ -8,7 +8,7 @@ This document is the durable source of truth for future development sessions and
 
 ## Current Status
 
-Phases 1 through 21 are complete in the current prototype.
+Phases 1 through 30 are complete in the current prototype. Phases 22 through 25 completed the baseline federal tax-stack view model and SVG renderer, the deterministic predefined-demo and curated-scenario runner, and related auditability refinements. Phases 26 through 29 corrected and source-audited the supported 2026 ordinary-income bracket tables for Single, Married Filing Jointly, and Head of Household; added reviewed MFJ and HOH scenario fixtures; expanded exact-threshold and scenario-catalog coverage; and documented the resulting validation baseline. Phase 30 reconciled the durable project documentation, clarified that MFS rule-table data is inactive because the federal orchestrator rejects that filing status, and added a manual scenario-validation runbook for independent comparison with external tax calculators. The current verified test baseline is 169 passing tests.
 
 Phase 13 completed state-contract and state-tax policy test hardening. No production code changed, and the full test suite passed with 90 tests.
 
@@ -31,11 +31,12 @@ Phase 21 added a predefined, non-interactive federal scenario demo that runs the
 The current end-to-end capability is:
 
 ```text
-predefined TaxScenarioInput
+curated JSON scenario fixture
+-> validated TaxScenarioInput
 -> federal tax orchestration
 -> federal display model
--> federal chart view model
--> standalone deterministic SVG chart
+-> federal tax-stack and chart view models
+-> deterministic result.json and standalone tax-stack SVG review artifacts
 ```
 
 The current repository remains a prototype. Its outputs must stay deterministic, side-effect free, auditable, and test-led.
