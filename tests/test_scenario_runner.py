@@ -146,8 +146,18 @@ def test_run_all_repository_scenarios_pass(tmp_path):
 
     assert scenario_ids == [
         "high-income-niit",
+        "hoh-060k-014k-ltcg-030k-ss-standard",
+        "hoh-395k-224500-ltcg-050k-ss-standard",
         "hoh-ordinary-only",
         "mf-joint-ordinary-only",
+        "mfj-040k-005k-ltcg-standard",
+        "mfj-099k-044k-ltcg-030k-ss-explicit-74k",
+        "mfj-129k-046k-ss-standard",
+        "mfj-201k-055k-ltcg-075k-ss-standard",
+        "single-020k-003k-ltcg-standard",
+        "single-050k-011k-ltcg-015k-ss-standard",
+        "single-190k-080k-ltcg-020k-ss-explicit-30k",
+        "single-800k-200k-ltcg-015k-ss-explicit-80k",
         "single-baseline",
         "zero-income",
     ]

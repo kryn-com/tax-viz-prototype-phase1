@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "id": "mfj-040k-005k-ltcg-standard",
+  "description": "MFJ: 40k ordinary, 5k LTCG, standard deduction",
+  "tags": ["curated", "mfj", "preferential"],
+  "status": "active",
+  "scenario": {
+    "tax_year": 2026,
+    "state_code": "TX",
+    "filing_status": "married_filing_jointly",
+    "ordinary_income": 40000.0,
+    "ltcg_qd_income": 5000.0,
+    "social_security_income": 0.0,
+    "nontaxable_income": 0.0,
+    "deduction_mode": "standard",
+    "deduction_amount": 0.0
+  }
+}

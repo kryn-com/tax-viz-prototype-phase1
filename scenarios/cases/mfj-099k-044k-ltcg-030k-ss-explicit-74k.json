@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "id": "mfj-099k-044k-ltcg-030k-ss-explicit-74k",
+  "description": "MFJ: 99k ordinary, 44k LTCG, 30k SS, 74k explicit deduction",
+  "tags": ["curated", "mfj", "preferential", "ss", "explicit-deduction"],
+  "status": "active",
+  "scenario": {
+    "tax_year": 2026,
+    "state_code": "TX",
+    "filing_status": "married_filing_jointly",
+    "ordinary_income": 99000.0,
+    "ltcg_qd_income": 44000.0,
+    "social_security_income": 30000.0,
+    "nontaxable_income": 0.0,
+    "deduction_mode": "explicit",
+    "deduction_amount": 74000.0
+  }
+}

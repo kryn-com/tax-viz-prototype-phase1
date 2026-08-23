@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "id": "single-020k-003k-ltcg-standard",
+  "description": "Single: 20k ordinary, 3k LTCG, standard deduction",
+  "tags": ["curated", "single", "preferential"],
+  "status": "active",
+  "scenario": {
+    "tax_year": 2026,
+    "state_code": "TX",
+    "filing_status": "single",
+    "ordinary_income": 20000.0,
+    "ltcg_qd_income": 3000.0,
+    "social_security_income": 0.0,
+    "nontaxable_income": 0.0,
+    "deduction_mode": "standard",
+    "deduction_amount": 0.0
+  }
+}

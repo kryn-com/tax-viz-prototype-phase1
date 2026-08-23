@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "id": "single-190k-080k-ltcg-020k-ss-explicit-30k",
+  "description": "Single: 190k ordinary, 80k LTCG, 20k SS, 30k explicit deduction",
+  "tags": ["curated", "single", "preferential", "ss", "explicit-deduction"],
+  "status": "active",
+  "scenario": {
+    "tax_year": 2026,
+    "state_code": "TX",
+    "filing_status": "single",
+    "ordinary_income": 190000.0,
+    "ltcg_qd_income": 80000.0,
+    "social_security_income": 20000.0,
+    "nontaxable_income": 0.0,
+    "deduction_mode": "explicit",
+    "deduction_amount": 30000.0
+  }
+}

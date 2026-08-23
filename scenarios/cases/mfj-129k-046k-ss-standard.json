@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "id": "mfj-129k-046k-ss-standard",
+  "description": "MFJ: 129k ordinary, 46k SS, standard deduction",
+  "tags": ["curated", "mfj", "ss"],
+  "status": "active",
+  "scenario": {
+    "tax_year": 2026,
+    "state_code": "TX",
+    "filing_status": "married_filing_jointly",
+    "ordinary_income": 129000.0,
+    "ltcg_qd_income": 0.0,
+    "social_security_income": 46000.0,
+    "nontaxable_income": 0.0,
+    "deduction_mode": "standard",
+    "deduction_amount": 0.0
+  }
+}

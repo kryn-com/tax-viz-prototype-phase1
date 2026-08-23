@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "id": "hoh-395k-224500-ltcg-050k-ss-standard",
+  "description": "HOH: 395k ordinary, 224.5k LTCG, 50k SS, standard deduction",
+  "tags": ["curated", "hoh", "preferential", "ss", "niit"],
+  "status": "active",
+  "scenario": {
+    "tax_year": 2026,
+    "state_code": "TX",
+    "filing_status": "head_of_household",
+    "ordinary_income": 395000.0,
+    "ltcg_qd_income": 224500.0,
+    "social_security_income": 50000.0,
+    "nontaxable_income": 0.0,
+    "deduction_mode": "standard",
+    "deduction_amount": 0.0
+  }
+}

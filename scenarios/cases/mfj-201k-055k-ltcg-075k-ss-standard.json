@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "id": "mfj-201k-055k-ltcg-075k-ss-standard",
+  "description": "MFJ: 201k ordinary, 55k LTCG, 75k SS, standard deduction",
+  "tags": ["curated", "mfj", "preferential", "ss"],
+  "status": "active",
+  "scenario": {
+    "tax_year": 2026,
+    "state_code": "TX",
+    "filing_status": "married_filing_jointly",
+    "ordinary_income": 201000.0,
+    "ltcg_qd_income": 55000.0,
+    "social_security_income": 75000.0,
+    "nontaxable_income": 0.0,
+    "deduction_mode": "standard",
+    "deduction_amount": 0.0
+  }
+}
