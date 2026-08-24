@@ -8,7 +8,7 @@ This document is the durable source of truth for future development sessions and
 
 ## Current Status
 
-Phases 1 through 30 are complete in the current prototype. Phases 22 through 25 completed the baseline federal tax-stack view model and SVG renderer, the deterministic predefined-demo and curated-scenario runner, and related auditability refinements. Phases 26 through 29 corrected and source-audited the supported 2026 ordinary-income bracket tables for Single, Married Filing Jointly, and Head of Household; added reviewed MFJ and HOH scenario fixtures; expanded exact-threshold and scenario-catalog coverage; and documented the resulting validation baseline. Phase 30 reconciled the durable project documentation, clarified that MFS rule-table data is inactive because the federal orchestrator rejects that filing status, and added a manual scenario-validation runbook for independent comparison with external tax calculators. The current verified test baseline is 169 passing tests.
+Phases 1 through 31 are complete in the current prototype. Phases 22 through 25 completed the baseline federal tax-stack view model and SVG renderer, the deterministic predefined-demo and curated-scenario runner, and related auditability refinements. Phases 26 through 29 corrected and source-audited the supported 2026 ordinary-income bracket tables for Single, Married Filing Jointly, and Head of Household; added reviewed MFJ and HOH scenario fixtures; expanded exact-threshold and scenario-catalog coverage; and documented the resulting validation baseline. Phase 30 reconciled the durable project documentation, clarified that MFS rule-table data is inactive because the federal orchestrator rejects that filing status, and added a manual scenario-validation runbook for independent comparison with external tax calculators. Phase 31 enforced the filing-status standard-deduction floor for explicit deductions when the supplied amount is lower than standard, aligned LTCG/QD stacking with deduction-aware taxable ordinary income, updated direct regression coverage, and reconciled the scenario-runner catalog to the current 25 curated cases. The current verified test baseline is 170 passing tests.
 
 Phase 13 completed state-contract and state-tax policy test hardening. No production code changed, and the full test suite passed with 90 tests.
 
@@ -49,7 +49,7 @@ The current 2026 federal prototype includes:
 - A versionable federal-rule structure centered on `rules.federal.year_2026`
 - A federal ordinary-income tax engine that produces taxable ordinary income, total ordinary tax, and a detailed bracket trace
 - A Social Security taxability engine using provisional-income mechanics and statutory limits
-- An LTCG/qualified-dividend engine that stacks combined preferential income above taxable ordinary income and traces the 0%, 15%, and 20% rate-band amounts
+- An LTCG/qualified-dividend engine that stacks combined preferential income above deduction-adjusted taxable ordinary income and traces the 0%, 15%, and 20% rate-band amounts
 - A standalone NIIT engine that calculates the NIIT base and 3.8% liability from MAGI and net-investment-income inputs
 - A Federal Pipeline Orchestrator that runs the completed engines in dependency order and returns a unified `FederalTaxResult`
 - An isolated typed and numeric state-tax boundary for selected flat-tax and no-income-tax states
@@ -110,6 +110,8 @@ compute_taxable_ordinary_income(
 ```
 
 The deductions helper returns a scalar taxable-ordinary-income value. It does not currently return a separate structured deduction-output object, so `FederalTaxResult` must not invent or imply one.
+
+For the current prototype, the applied deduction at the ordinary-tax boundary is the greater of the supplied explicit deduction amount and the filing-status standard deduction. Preferential LTCG/QD stacking must use the same resolved applied deduction so that ordinary-income taxation and preferential-rate calculations remain internally consistent.
 
 ## Current Constraints
 
