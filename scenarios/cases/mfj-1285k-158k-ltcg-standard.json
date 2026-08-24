@@ -1,0 +1,23 @@
+{
+    "schema_version":  1,
+    "id":  "mfj-1285k-158k-ltcg-standard",
+    "description":  "MFJ: 1285k ordinary, 158k LTCG, standard deduction",
+    "tags":  [
+                 "curated",
+                 "mfj",
+                 "preferential",
+                 "niit"
+             ],
+    "status":  "active",
+    "scenario":  {
+                     "deduction_amount":  0,
+                     "state_code":  "TX",
+                     "deduction_mode":  "standard",
+                     "ltcg_qd_income":  158000,
+                     "filing_status":  "married_filing_jointly",
+                     "ordinary_income":  1285000,
+                     "tax_year":  2026,
+                     "social_security_income":  0,
+                     "nontaxable_income":  20000
+                 }
+}

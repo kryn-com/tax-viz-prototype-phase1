@@ -1,6 +1,6 @@
 from models.inputs import TaxScenarioInput, FilingStatus
 from models.outputs import LTCG_QD_Output
-from engines.deductions import compute_taxable_ordinary_income
+from engines.deductions import compute_taxable_ordinary_income, resolve_deduction_amount
 
 def compute_preferential_tax(scenario: TaxScenarioInput) -> LTCG_QD_Output:
     """
@@ -37,9 +37,11 @@ def compute_preferential_tax(scenario: TaxScenarioInput) -> LTCG_QD_Output:
         )
 
     # Calculate the base ordinary income pushing preferential income up the brackets.
+    applied_deduction = resolve_deduction_amount(scenario)
+
     base_income = compute_taxable_ordinary_income(
         ordinary_income=scenario.ordinary_income,
-        deduction_amount=scenario.deduction_amount
+        deduction_amount=applied_deduction
     )
 
     # 1. Fill the 0% Bracket

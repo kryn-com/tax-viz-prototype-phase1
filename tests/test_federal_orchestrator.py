@@ -57,7 +57,7 @@ def test_orchestrator_does_not_mutate_input():
     assert result.scenario is scenario
 
 
-def test_orchestrator_applies_deduction_after_taxable_social_security():
+def test_orchestrator_applies_deduction_floor_after_taxable_social_security():
     """Verifies deductions apply to effective ordinary income without reducing LTCG/QD income."""
     scenario = TaxScenarioInput(
         tax_year=2026,
@@ -76,12 +76,14 @@ def test_orchestrator_applies_deduction_after_taxable_social_security():
     effective_ordinary_income = (
         scenario.ordinary_income + result.ss_output.taxable_social_security
     )
+    applied_deduction = 16100.0
+
     assert result.ordinary_output.ordinary_income == pytest.approx(
         effective_ordinary_income
     )
-    assert result.ordinary_output.deduction_applied == scenario.deduction_amount
+    assert result.ordinary_output.deduction_applied == applied_deduction
     assert result.taxable_ordinary_income == pytest.approx(
-        max(0.0, effective_ordinary_income - scenario.deduction_amount)
+        max(0.0, effective_ordinary_income - applied_deduction)
     )
     assert result.taxable_preferential_income == scenario.ltcg_qd_income
     assert scenario.model_dump() == original_values

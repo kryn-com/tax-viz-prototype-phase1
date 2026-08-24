@@ -1,0 +1,23 @@
+{
+    "schema_version":  1,
+    "id":  "single-110k-040k-ss-explicit-40k",
+    "description":  "Single: 110k ordinary, 40k SS, explicit 40k deduction",
+    "tags":  [
+                 "curated",
+                 "single",
+                 "ss",
+                 "explicit-deduction"
+             ],
+    "status":  "active",
+    "scenario":  {
+                     "deduction_amount":  40000,
+                     "state_code":  "TX",
+                     "deduction_mode":  "explicit",
+                     "ltcg_qd_income":  0,
+                     "filing_status":  "single",
+                     "ordinary_income":  110000,
+                     "tax_year":  2026,
+                     "social_security_income":  40000,
+                     "nontaxable_income":  9000
+                 }
+}

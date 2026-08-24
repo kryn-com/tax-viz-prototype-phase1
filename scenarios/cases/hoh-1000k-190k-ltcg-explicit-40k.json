@@ -1,0 +1,24 @@
+{
+    "schema_version":  1,
+    "id":  "hoh-1000k-190k-ltcg-explicit-40k",
+    "description":  "HOH: 1000k ordinary, 190k LTCG, explicit 40k deduction",
+    "tags":  [
+                 "curated",
+                 "hoh",
+                 "preferential",
+                 "niit",
+                 "explicit-deduction"
+             ],
+    "status":  "active",
+    "scenario":  {
+                     "deduction_amount":  40000,
+                     "state_code":  "TX",
+                     "deduction_mode":  "explicit",
+                     "ltcg_qd_income":  190000,
+                     "filing_status":  "head_of_household",
+                     "ordinary_income":  1000000,
+                     "tax_year":  2026,
+                     "social_security_income":  0,
+                     "nontaxable_income":  10000
+                 }
+}

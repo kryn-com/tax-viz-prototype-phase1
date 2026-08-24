@@ -43,7 +43,7 @@ def test_build_federal_tax_stack_view_model_maps_complete_result():
     assert model.total_federal_tax == result.total_federal_tax
 
 
-def test_build_federal_tax_stack_view_model_maps_deduction_shielding():
+def test_build_federal_tax_stack_view_model_maps_applied_deduction_shielding():
     result = orchestrate_federal_tax(
         create_scenario(
             deduction_mode=DeductionMode.EXPLICIT,
@@ -53,7 +53,7 @@ def test_build_federal_tax_stack_view_model_maps_deduction_shielding():
 
     model = build_federal_tax_stack_view_model(result)
 
-    assert model.deduction_shielding_amount == 12345.0
+    assert model.deduction_shielding_amount == 16100.0
     assert model.deduction_shielding_amount == result.ordinary_output.deduction_applied
 
 
