@@ -2,7 +2,14 @@
   "schema_version": 1,
   "id": "single-800k-200k-ltcg-015k-ss-explicit-80k",
   "description": "Single: 800k ordinary, 200k LTCG, 15k SS, 80k explicit deduction",
-  "tags": ["curated", "single", "preferential", "ss", "niit", "explicit-deduction"],
+  "tags": [
+    "curated",
+    "single",
+    "preferential",
+    "ss",
+    "niit",
+    "explicit-deduction"
+  ],
   "status": "active",
   "scenario": {
     "tax_year": 2026,
@@ -13,6 +20,7 @@
     "social_security_income": 15000.0,
     "nontaxable_income": 0.0,
     "deduction_mode": "explicit",
-    "deduction_amount": 80000.0
+    "deduction_amount": 80000.0,
+    "taxpayer_age": 45
   }
 }

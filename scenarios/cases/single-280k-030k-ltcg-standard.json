@@ -1,22 +1,23 @@
 {
-    "schema_version":  1,
-    "id":  "single-280k-030k-ltcg-standard",
-    "description":  "Single: 280k ordinary, 30k LTCG, standard deduction",
-    "tags":  [
-                 "curated",
-                 "single",
-                 "preferential"
-             ],
-    "status":  "active",
-    "scenario":  {
-                     "deduction_amount":  0,
-                     "state_code":  "TX",
-                     "deduction_mode":  "standard",
-                     "ltcg_qd_income":  30000,
-                     "filing_status":  "single",
-                     "ordinary_income":  280000,
-                     "tax_year":  2026,
-                     "social_security_income":  0,
-                     "nontaxable_income":  1000
-                 }
+  "schema_version": 1,
+  "id": "single-280k-030k-ltcg-standard",
+  "description": "Single: 280k ordinary, 30k LTCG, standard deduction",
+  "tags": [
+    "curated",
+    "single",
+    "preferential"
+  ],
+  "status": "active",
+  "scenario": {
+    "deduction_amount": 0,
+    "state_code": "TX",
+    "deduction_mode": "standard",
+    "ltcg_qd_income": 30000,
+    "filing_status": "single",
+    "ordinary_income": 280000,
+    "tax_year": 2026,
+    "social_security_income": 0,
+    "nontaxable_income": 1000,
+    "taxpayer_age": 45
+  }
 }

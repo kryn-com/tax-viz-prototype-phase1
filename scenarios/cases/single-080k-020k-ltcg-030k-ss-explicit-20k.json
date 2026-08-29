@@ -1,24 +1,25 @@
 {
-    "schema_version":  1,
-    "id":  "single-080k-020k-ltcg-030k-ss-explicit-20k",
-    "description":  "Single: 80k ordinary, 20k LTCG, 30k SS, explicit 20k deduction",
-    "tags":  [
-                 "curated",
-                 "single",
-                 "preferential",
-                 "ss",
-                 "explicit-deduction"
-             ],
-    "status":  "active",
-    "scenario":  {
-                     "deduction_amount":  20000,
-                     "state_code":  "TX",
-                     "deduction_mode":  "explicit",
-                     "ltcg_qd_income":  20000,
-                     "filing_status":  "single",
-                     "ordinary_income":  80000,
-                     "tax_year":  2026,
-                     "social_security_income":  30000,
-                     "nontaxable_income":  2000
-                 }
+  "schema_version": 1,
+  "id": "single-080k-020k-ltcg-030k-ss-explicit-20k",
+  "description": "Single: 80k ordinary, 20k LTCG, 30k SS, explicit 20k deduction",
+  "tags": [
+    "curated",
+    "single",
+    "preferential",
+    "ss",
+    "explicit-deduction"
+  ],
+  "status": "active",
+  "scenario": {
+    "deduction_amount": 20000,
+    "state_code": "TX",
+    "deduction_mode": "explicit",
+    "ltcg_qd_income": 20000,
+    "filing_status": "single",
+    "ordinary_income": 80000,
+    "tax_year": 2026,
+    "social_security_income": 30000,
+    "nontaxable_income": 2000,
+    "taxpayer_age": 45
+  }
 }

@@ -16,6 +16,8 @@ def create_sliver_scenario(
         tax_year=2026,
         state_code="NC",
         filing_status=filing_status,
+        taxpayer_age=45,
+        spouse_age=45 if filing_status is FilingStatus.MARRIED_FILING_JOINTLY else None,
         ordinary_income=40000.0,
         ltcg_qd_income=20000.0,
         social_security_income=30000.0,

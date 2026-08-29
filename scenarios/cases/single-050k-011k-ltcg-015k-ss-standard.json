@@ -2,7 +2,12 @@
   "schema_version": 1,
   "id": "single-050k-011k-ltcg-015k-ss-standard",
   "description": "Single: 50k ordinary, 11k LTCG, 15k SS, standard deduction",
-  "tags": ["curated", "single", "preferential", "ss"],
+  "tags": [
+    "curated",
+    "single",
+    "preferential",
+    "ss"
+  ],
   "status": "active",
   "scenario": {
     "tax_year": 2026,
@@ -13,6 +18,7 @@
     "social_security_income": 15000.0,
     "nontaxable_income": 0.0,
     "deduction_mode": "standard",
-    "deduction_amount": 0.0
+    "deduction_amount": 0.0,
+    "taxpayer_age": 45
   }
 }

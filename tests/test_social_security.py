@@ -14,11 +14,13 @@ def create_ss_scenario(
         tax_year=2026,
         state_code="TX",
         filing_status=status,
+        taxpayer_age=45,
+        spouse_age=45 if status is FilingStatus.MARRIED_FILING_JOINTLY else None,
         ordinary_income=ordinary,
         social_security_income=ss_income,
         ltcg_qd_income=ltcg,
         nontaxable_income=nontaxable,
-        deduction_amount=0.0
+        deduction_amount=0.0,
     )
 
 def test_single_below_threshold():

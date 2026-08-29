@@ -2,7 +2,11 @@
   "schema_version": 1,
   "id": "mf-joint-ordinary-only",
   "description": "Married filing jointly with ordinary income only and standard deduction",
-  "tags": ["manual", "ordinary-income", "mfj"],
+  "tags": [
+    "manual",
+    "ordinary-income",
+    "mfj"
+  ],
   "status": "active",
   "scenario": {
     "tax_year": 2026,
@@ -13,13 +17,15 @@
     "social_security_income": 0.0,
     "nontaxable_income": 0.0,
     "deduction_mode": "standard",
-    "deduction_amount": 0.0
+    "deduction_amount": 0.0,
+    "taxpayer_age": 45,
+    "spouse_age": 45
   },
- "expected": {
-  "taxable_ordinary_income": 87800.0,
-  "ordinary_tax": 10040.0,
-  "ltcg_qd_tax": 0.0,
-  "niit_tax": 0.0,
-  "total_federal_tax": 10040.0
-}
+  "expected": {
+    "taxable_ordinary_income": 87800.0,
+    "ordinary_tax": 10040.0,
+    "ltcg_qd_tax": 0.0,
+    "niit_tax": 0.0,
+    "total_federal_tax": 10040.0
+  }
 }

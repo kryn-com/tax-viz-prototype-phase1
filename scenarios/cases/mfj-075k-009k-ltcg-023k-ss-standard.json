@@ -1,23 +1,25 @@
 {
-    "schema_version":  1,
-    "id":  "mfj-075k-009k-ltcg-023k-ss-standard",
-    "description":  "MFJ: 75k ordinary, 9k LTCG, 23k SS, standard deduction",
-    "tags":  [
-                 "curated",
-                 "mfj",
-                 "preferential",
-                 "ss"
-             ],
-    "status":  "active",
-    "scenario":  {
-                     "deduction_amount":  0,
-                     "state_code":  "TX",
-                     "deduction_mode":  "standard",
-                     "ltcg_qd_income":  9000,
-                     "filing_status":  "married_filing_jointly",
-                     "ordinary_income":  75000,
-                     "tax_year":  2026,
-                     "social_security_income":  23000,
-                     "nontaxable_income":  1000
-                 }
+  "schema_version": 1,
+  "id": "mfj-075k-009k-ltcg-023k-ss-standard",
+  "description": "MFJ: 75k ordinary, 9k LTCG, 23k SS, standard deduction",
+  "tags": [
+    "curated",
+    "mfj",
+    "preferential",
+    "ss"
+  ],
+  "status": "active",
+  "scenario": {
+    "deduction_amount": 0,
+    "state_code": "TX",
+    "deduction_mode": "standard",
+    "ltcg_qd_income": 9000,
+    "filing_status": "married_filing_jointly",
+    "ordinary_income": 75000,
+    "tax_year": 2026,
+    "social_security_income": 23000,
+    "nontaxable_income": 1000,
+    "taxpayer_age": 45,
+    "spouse_age": 45
+  }
 }

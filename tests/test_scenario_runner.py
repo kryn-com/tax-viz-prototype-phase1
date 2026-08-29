@@ -18,6 +18,7 @@ SCENARIO = {
     "tax_year": 2026,
     "state_code": "NC",
     "filing_status": "single",
+    "taxpayer_age": 45,
     "ordinary_income": 60000.0,
     "ltcg_qd_income": 20000.0,
     "social_security_income": 30000.0,
@@ -54,6 +55,36 @@ def test_load_scenario_fixture_validates_native_tax_input():
 
 def test_load_scenario_fixture_rejects_invalid_tax_input(tmp_path):
     path = write_fixture(tmp_path, "invalid", scenario={"tax_year": 2025})
+
+    with pytest.raises(ValueError, match="Invalid tax scenario"):
+        load_scenario_fixture(path)
+
+
+def test_load_scenario_fixture_accepts_valid_taxpayer_age(tmp_path):
+    path = write_fixture(tmp_path, "valid-age", scenario={"taxpayer_age": 45})
+
+    fixture = load_scenario_fixture(path)
+
+    assert fixture["scenario"].taxpayer_age == 45
+
+
+def test_load_scenario_fixture_rejects_mfj_without_spouse_age(tmp_path):
+    path = write_fixture(
+        tmp_path,
+        "mfj-no-spouse-age",
+        scenario={
+            "filing_status": "married_filing_jointly",
+            "taxpayer_age": 45,
+            "spouse_age": None,
+        },
+    )
+
+    with pytest.raises(ValueError, match="Invalid tax scenario"):
+        load_scenario_fixture(path)
+
+
+def test_load_scenario_fixture_rejects_invalid_taxpayer_age(tmp_path):
+    path = write_fixture(tmp_path, "invalid-age", scenario={"taxpayer_age": 121})
 
     with pytest.raises(ValueError, match="Invalid tax scenario"):
         load_scenario_fixture(path)

@@ -13,9 +13,11 @@ def create_ltcg_scenario(
         tax_year=2026,
         state_code="TX",
         filing_status=status,
+        taxpayer_age=45,
         ordinary_income=ordinary,
         ltcg_qd_income=ltcg,
-        deduction_amount=deduction
+        deduction_amount=deduction,
+        spouse_age=45 if status is FilingStatus.MARRIED_FILING_JOINTLY else None,
     )
 
 def test_zero_preferential_income():

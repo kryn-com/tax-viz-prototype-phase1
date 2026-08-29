@@ -2,7 +2,13 @@
   "schema_version": 1,
   "id": "mfj-099k-044k-ltcg-030k-ss-explicit-74k",
   "description": "MFJ: 99k ordinary, 44k LTCG, 30k SS, 74k explicit deduction",
-  "tags": ["curated", "mfj", "preferential", "ss", "explicit-deduction"],
+  "tags": [
+    "curated",
+    "mfj",
+    "preferential",
+    "ss",
+    "explicit-deduction"
+  ],
   "status": "active",
   "scenario": {
     "tax_year": 2026,
@@ -13,6 +19,8 @@
     "social_security_income": 30000.0,
     "nontaxable_income": 0.0,
     "deduction_mode": "explicit",
-    "deduction_amount": 74000.0
+    "deduction_amount": 74000.0,
+    "taxpayer_age": 45,
+    "spouse_age": 45
   }
 }

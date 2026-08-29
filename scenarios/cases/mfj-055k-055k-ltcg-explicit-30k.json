@@ -1,23 +1,25 @@
 {
-    "schema_version":  1,
-    "id":  "mfj-055k-055k-ltcg-explicit-30k",
-    "description":  "MFJ: 55k ordinary, 55k LTCG, explicit 30k deduction",
-    "tags":  [
-                 "curated",
-                 "mfj",
-                 "preferential",
-                 "explicit-deduction"
-             ],
-    "status":  "active",
-    "scenario":  {
-                     "deduction_amount":  30000,
-                     "state_code":  "TX",
-                     "deduction_mode":  "explicit",
-                     "ltcg_qd_income":  55000,
-                     "filing_status":  "married_filing_jointly",
-                     "ordinary_income":  55000,
-                     "tax_year":  2026,
-                     "social_security_income":  0,
-                     "nontaxable_income":  5000
-                 }
+  "schema_version": 1,
+  "id": "mfj-055k-055k-ltcg-explicit-30k",
+  "description": "MFJ: 55k ordinary, 55k LTCG, explicit 30k deduction",
+  "tags": [
+    "curated",
+    "mfj",
+    "preferential",
+    "explicit-deduction"
+  ],
+  "status": "active",
+  "scenario": {
+    "deduction_amount": 30000,
+    "state_code": "TX",
+    "deduction_mode": "explicit",
+    "ltcg_qd_income": 55000,
+    "filing_status": "married_filing_jointly",
+    "ordinary_income": 55000,
+    "tax_year": 2026,
+    "social_security_income": 0,
+    "nontaxable_income": 5000,
+    "taxpayer_age": 45,
+    "spouse_age": 45
+  }
 }

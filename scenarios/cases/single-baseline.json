@@ -2,7 +2,10 @@
   "schema_version": 1,
   "id": "single-baseline",
   "description": "Single filer with ordinary income, LTCG/QD, and Social Security",
-  "tags": ["baseline", "social-security"],
+  "tags": [
+    "baseline",
+    "social-security"
+  ],
   "scenario": {
     "tax_year": 2026,
     "state_code": "NC",
@@ -12,7 +15,8 @@
     "social_security_income": 30000.0,
     "nontaxable_income": 0.0,
     "deduction_mode": "standard",
-    "deduction_amount": 0.0
+    "deduction_amount": 0.0,
+    "taxpayer_age": 45
   },
   "expected": {
     "total_federal_tax": 12980.0,

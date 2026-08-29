@@ -2,7 +2,11 @@
   "schema_version": 1,
   "id": "mfj-129k-046k-ss-standard",
   "description": "MFJ: 129k ordinary, 46k SS, standard deduction",
-  "tags": ["curated", "mfj", "ss"],
+  "tags": [
+    "curated",
+    "mfj",
+    "ss"
+  ],
   "status": "active",
   "scenario": {
     "tax_year": 2026,
@@ -13,6 +17,8 @@
     "social_security_income": 46000.0,
     "nontaxable_income": 0.0,
     "deduction_mode": "standard",
-    "deduction_amount": 0.0
+    "deduction_amount": 0.0,
+    "taxpayer_age": 45,
+    "spouse_age": 45
   }
 }

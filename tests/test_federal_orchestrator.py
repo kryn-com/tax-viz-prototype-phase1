@@ -9,6 +9,7 @@ def test_orchestrator_zero_income():
         tax_year=2026,
         state_code="NC",
         filing_status=FilingStatus.SINGLE,
+        taxpayer_age=45,
         ordinary_income=0.0,
         ltcg_qd_income=0.0,
         social_security_income=0.0,
@@ -32,6 +33,7 @@ def test_orchestrator_mfs_rejection():
         tax_year=2026,
         state_code="NC",
         filing_status=FilingStatus.MARRIED_FILING_SEPARATELY,
+        taxpayer_age=45,
         ordinary_income=50000.0,
     )
     with pytest.raises(ValueError, match="Married Filing Separately \\(MFS\\) is unsupported."):
@@ -44,6 +46,7 @@ def test_orchestrator_does_not_mutate_input():
         tax_year=2026,
         state_code="NC",
         filing_status=FilingStatus.SINGLE,
+        taxpayer_age=45,
         ordinary_income=40000.0,
         ltcg_qd_income=10000.0,
         social_security_income=30000.0,
@@ -63,6 +66,7 @@ def test_orchestrator_applies_deduction_floor_after_taxable_social_security():
         tax_year=2026,
         state_code="NC",
         filing_status=FilingStatus.SINGLE,
+        taxpayer_age=45,
         ordinary_income=40000.0,
         ltcg_qd_income=20000.0,
         social_security_income=30000.0,
@@ -95,6 +99,7 @@ def test_orchestrator_rejects_mfs_before_downstream_calls(monkeypatch):
         tax_year=2026,
         state_code="NC",
         filing_status=FilingStatus.MARRIED_FILING_SEPARATELY,
+        taxpayer_age=45,
         ordinary_income=50000.0,
     )
 
@@ -128,6 +133,7 @@ def test_orchestrator_head_of_household_smoke():
         tax_year=2026,
         state_code="NC",
         filing_status=FilingStatus.HEAD_OF_HOUSEHOLD,
+        taxpayer_age=45,
         ordinary_income=40000.0,
         ltcg_qd_income=10000.0,
     )
@@ -147,6 +153,7 @@ def test_orchestrator_ss_flow():
         tax_year=2026,
         state_code="NC",
         filing_status=FilingStatus.SINGLE,
+        taxpayer_age=45,
         ordinary_income=40000.0,
         social_security_income=30000.0,
         deduction_mode=DeductionMode.STANDARD,
@@ -169,6 +176,7 @@ def test_orchestrator_preferential_stacking():
         tax_year=2026,
         state_code="NC",
         filing_status=FilingStatus.SINGLE,
+        taxpayer_age=45,
         ordinary_income=60000.0,
         ltcg_qd_income=20000.0,
         deduction_mode=DeductionMode.STANDARD,
@@ -187,6 +195,7 @@ def test_orchestrator_niit_trigger():
         tax_year=2026,
         state_code="NC",
         filing_status=FilingStatus.SINGLE,
+        taxpayer_age=45,
         ordinary_income=220000.0,
         ltcg_qd_income=50000.0,
         deduction_mode=DeductionMode.STANDARD,
@@ -203,12 +212,18 @@ def test_orchestrator_total_reconciliation():
     """Verifies mathematical reconciliation that total federal tax equals component sum across scenarios."""
     scenarios = [
         TaxScenarioInput(
-            tax_year=2026, state_code="NC", filing_status=FilingStatus.SINGLE, ordinary_income=15000.0
+            tax_year=2026,
+            state_code="NC",
+            filing_status=FilingStatus.SINGLE,
+            taxpayer_age=45,
+            ordinary_income=15000.0,
         ),
         TaxScenarioInput(
             tax_year=2026,
             state_code="NC",
             filing_status=FilingStatus.MARRIED_FILING_JOINTLY,
+            taxpayer_age=45,
+            spouse_age=45,
             ordinary_income=120000.0,
             ltcg_qd_income=30000.0,
         ),
@@ -216,6 +231,7 @@ def test_orchestrator_total_reconciliation():
             tax_year=2026,
             state_code="NC",
             filing_status=FilingStatus.SINGLE,
+            taxpayer_age=45,
             ordinary_income=250000.0,
             ltcg_qd_income=40000.0,
             social_security_income=20000.0,

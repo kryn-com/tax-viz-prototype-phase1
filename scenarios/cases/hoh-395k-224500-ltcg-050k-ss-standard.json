@@ -2,7 +2,13 @@
   "schema_version": 1,
   "id": "hoh-395k-224500-ltcg-050k-ss-standard",
   "description": "HOH: 395k ordinary, 224.5k LTCG, 50k SS, standard deduction",
-  "tags": ["curated", "hoh", "preferential", "ss", "niit"],
+  "tags": [
+    "curated",
+    "hoh",
+    "preferential",
+    "ss",
+    "niit"
+  ],
   "status": "active",
   "scenario": {
     "tax_year": 2026,
@@ -13,6 +19,7 @@
     "social_security_income": 50000.0,
     "nontaxable_income": 0.0,
     "deduction_mode": "standard",
-    "deduction_amount": 0.0
+    "deduction_amount": 0.0,
+    "taxpayer_age": 45
   }
 }

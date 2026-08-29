@@ -13,6 +13,8 @@ def create_base_scenario(
         tax_year=2026,
         state_code="TX",
         filing_status=status,
+        taxpayer_age=45,
+        spouse_age=45 if status is FilingStatus.MARRIED_FILING_JOINTLY else None,
         ordinary_income=income,
         deduction_amount=deduction,
         deduction_mode=deduction_mode,
@@ -220,6 +222,7 @@ def test_standard_deduction_single_is_resolved_from_2026_rules():
         tax_year=2026,
         state_code="TX",
         filing_status=FilingStatus.SINGLE,
+        taxpayer_age=45,
         ordinary_income=50000.0,
         deduction_mode=DeductionMode.STANDARD,
     )
@@ -235,6 +238,8 @@ def test_standard_deduction_married_filing_jointly_is_resolved_from_2026_rules()
         tax_year=2026,
         state_code="TX",
         filing_status=FilingStatus.MARRIED_FILING_JOINTLY,
+        taxpayer_age=45,
+        spouse_age=45,
         ordinary_income=50000.0,
         deduction_mode=DeductionMode.STANDARD,
     )

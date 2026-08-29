@@ -2,7 +2,12 @@
   "schema_version": 1,
   "id": "hoh-060k-014k-ltcg-030k-ss-standard",
   "description": "HOH: 60k ordinary, 14k LTCG, 30k SS, standard deduction",
-  "tags": ["curated", "hoh", "preferential", "ss"],
+  "tags": [
+    "curated",
+    "hoh",
+    "preferential",
+    "ss"
+  ],
   "status": "active",
   "scenario": {
     "tax_year": 2026,
@@ -13,6 +18,7 @@
     "social_security_income": 30000.0,
     "nontaxable_income": 0.0,
     "deduction_mode": "standard",
-    "deduction_amount": 0.0
+    "deduction_amount": 0.0,
+    "taxpayer_age": 45
   }
 }

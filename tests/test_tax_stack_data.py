@@ -13,6 +13,7 @@ def create_scenario(**overrides):
         "tax_year": 2026,
         "state_code": "NC",
         "filing_status": FilingStatus.SINGLE,
+        "taxpayer_age": 45,
         "ordinary_income": 60000.0,
         "ltcg_qd_income": 20000.0,
         "social_security_income": 30000.0,

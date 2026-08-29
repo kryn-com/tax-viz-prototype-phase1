@@ -2,7 +2,10 @@
   "schema_version": 1,
   "id": "zero-income",
   "description": "Zero-income boundary case",
-  "tags": ["boundary", "zero"],
+  "tags": [
+    "boundary",
+    "zero"
+  ],
   "scenario": {
     "tax_year": 2026,
     "state_code": "NC",
@@ -12,6 +15,7 @@
     "social_security_income": 0.0,
     "nontaxable_income": 0.0,
     "deduction_mode": "explicit",
-    "deduction_amount": 0.0
+    "deduction_amount": 0.0,
+    "taxpayer_age": 45
   }
 }

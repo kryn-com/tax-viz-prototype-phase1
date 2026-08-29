@@ -1,22 +1,24 @@
 {
-    "schema_version":  1,
-    "id":  "mfj-128k-012k-ltcg-standard",
-    "description":  "MFJ: 128k ordinary, 12k LTCG, standard deduction",
-    "tags":  [
-                 "curated",
-                 "mfj",
-                 "preferential"
-             ],
-    "status":  "active",
-    "scenario":  {
-                     "deduction_amount":  0,
-                     "state_code":  "TX",
-                     "deduction_mode":  "standard",
-                     "ltcg_qd_income":  12000,
-                     "filing_status":  "married_filing_jointly",
-                     "ordinary_income":  128000,
-                     "tax_year":  2026,
-                     "social_security_income":  0,
-                     "nontaxable_income":  3000
-                 }
+  "schema_version": 1,
+  "id": "mfj-128k-012k-ltcg-standard",
+  "description": "MFJ: 128k ordinary, 12k LTCG, standard deduction",
+  "tags": [
+    "curated",
+    "mfj",
+    "preferential"
+  ],
+  "status": "active",
+  "scenario": {
+    "deduction_amount": 0,
+    "state_code": "TX",
+    "deduction_mode": "standard",
+    "ltcg_qd_income": 12000,
+    "filing_status": "married_filing_jointly",
+    "ordinary_income": 128000,
+    "tax_year": 2026,
+    "social_security_income": 0,
+    "nontaxable_income": 3000,
+    "taxpayer_age": 45,
+    "spouse_age": 45
+  }
 }

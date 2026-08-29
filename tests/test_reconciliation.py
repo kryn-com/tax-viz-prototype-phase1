@@ -15,6 +15,7 @@ def create_reconciliation_scenario(
         tax_year=2026,
         state_code="NC",
         filing_status=FilingStatus.SINGLE,
+        taxpayer_age=45,
         ordinary_income=ordinary_income,
         ltcg_qd_income=ltcg_qd_income,
     )
@@ -40,6 +41,7 @@ def test_reconcile_zero_tax_result():
         tax_year=2026,
         state_code="NC",
         filing_status=FilingStatus.SINGLE,
+        taxpayer_age=45,
     )
 
     reconciliation = reconcile_federal_tax(orchestrate_federal_tax(scenario))

@@ -1,25 +1,27 @@
 {
-    "schema_version":  1,
-    "id":  "mfj-385k-068k-ltcg-021k-ss-explicit-39k",
-    "description":  "MFJ: 385k ordinary, 68k LTCG, 21k SS, explicit 39k deduction",
-    "tags":  [
-                 "curated",
-                 "mfj",
-                 "preferential",
-                 "ss",
-                 "niit",
-                 "explicit-deduction"
-             ],
-    "status":  "active",
-    "scenario":  {
-                     "deduction_amount":  39000,
-                     "state_code":  "TX",
-                     "deduction_mode":  "explicit",
-                     "ltcg_qd_income":  68000,
-                     "filing_status":  "married_filing_jointly",
-                     "ordinary_income":  385000,
-                     "tax_year":  2026,
-                     "social_security_income":  21000,
-                     "nontaxable_income":  0
-                 }
+  "schema_version": 1,
+  "id": "mfj-385k-068k-ltcg-021k-ss-explicit-39k",
+  "description": "MFJ: 385k ordinary, 68k LTCG, 21k SS, explicit 39k deduction",
+  "tags": [
+    "curated",
+    "mfj",
+    "preferential",
+    "ss",
+    "niit",
+    "explicit-deduction"
+  ],
+  "status": "active",
+  "scenario": {
+    "deduction_amount": 39000,
+    "state_code": "TX",
+    "deduction_mode": "explicit",
+    "ltcg_qd_income": 68000,
+    "filing_status": "married_filing_jointly",
+    "ordinary_income": 385000,
+    "tax_year": 2026,
+    "social_security_income": 21000,
+    "nontaxable_income": 0,
+    "taxpayer_age": 45,
+    "spouse_age": 45
+  }
 }

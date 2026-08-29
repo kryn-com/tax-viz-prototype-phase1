@@ -2,7 +2,11 @@
   "schema_version": 1,
   "id": "high-income-niit",
   "description": "High-income case exercising preferential tax and NIIT",
-  "tags": ["high-income", "niit", "preferential"],
+  "tags": [
+    "high-income",
+    "niit",
+    "preferential"
+  ],
   "scenario": {
     "tax_year": 2026,
     "state_code": "NC",
@@ -12,6 +16,7 @@
     "social_security_income": 30000.0,
     "nontaxable_income": 0.0,
     "deduction_mode": "standard",
-    "deduction_amount": 0.0
+    "deduction_amount": 0.0,
+    "taxpayer_age": 45
   }
 }
