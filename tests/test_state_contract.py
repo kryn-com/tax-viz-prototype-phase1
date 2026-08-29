@@ -4,6 +4,7 @@ import pytest
 from pydantic import ValidationError
 
 from engines.state_policy import STATE_SUPPORT_POLICY, classify_state, require_supported_state
+from engines.state_tax import compute_nc_tax
 from models.inputs import FilingStatus, NCDeductionMode, TaxScenarioInput
 from models.state import (
     StateTaxRequest,
@@ -217,3 +218,175 @@ def test_nc_rules_are_scaffold_only_with_no_credit_or_engine_fields():
     assert "nc_taxable_income" not in TaxScenarioInput.model_fields
     assert "nc_income_tax_before_credits" not in TaxScenarioInput.model_fields
     assert "nc_credit_amount" not in TaxScenarioInput.model_fields
+
+
+def test_compute_nc_tax_base_case_and_flat_rate():
+    scenario = TaxScenarioInput(
+        tax_year=2026,
+        state_code="NC",
+        filing_status=FilingStatus.SINGLE,
+        taxpayer_age=45,
+        federal_agi=100000.0,
+        federal_taxable_social_security=5000.0,
+        net_nc_interest_dividend_adjustment=0.0,
+        bailey_exempt_pension_amount=None,
+        nc_deduction_mode=NCDeductionMode.STANDARD,
+    )
+
+    result = compute_nc_tax(scenario)
+
+    expected_standard_deduction = NC_2026_RULES["standard_deduction_by_filing_status"][scenario.filing_status.value]
+    expected_taxable_income = 100000.0 - 5000.0 - expected_standard_deduction
+    expected_tax = round(expected_taxable_income * 0.0399, 2)
+
+    assert result.nc_taxable_income == expected_taxable_income
+    assert result.nc_income_tax_before_credits == expected_tax
+    assert result.breakdown["less_federal_taxable_social_security"] == 5000.0
+    assert result.breakdown["selected_nc_deduction_amount"] == expected_standard_deduction
+
+
+def test_compute_nc_tax_handles_taxable_ss_and_signed_adjustments():
+    scenario = TaxScenarioInput(
+        tax_year=2026,
+        state_code="NC",
+        filing_status=FilingStatus.SINGLE,
+        taxpayer_age=48,
+        federal_agi=90000.0,
+        federal_taxable_social_security=12000.0,
+        net_nc_interest_dividend_adjustment=1500.0,
+        bailey_exempt_pension_amount=None,
+        nc_deduction_mode=NCDeductionMode.STANDARD,
+    )
+
+    result = compute_nc_tax(scenario)
+    taxable = 90000.0 - 12000.0 + 1500.0 - NC_2026_RULES["standard_deduction_by_filing_status"][scenario.filing_status.value]
+    assert result.nc_taxable_income == taxable
+    assert result.breakdown["plus_net_nc_interest_dividend_adjustment"] == 1500.0
+
+    scenario_negative = TaxScenarioInput(
+        tax_year=2026,
+        state_code="NC",
+        filing_status=FilingStatus.SINGLE,
+        taxpayer_age=49,
+        federal_agi=90000.0,
+        federal_taxable_social_security=12000.0,
+        net_nc_interest_dividend_adjustment=-1500.0,
+        bailey_exempt_pension_amount=None,
+        nc_deduction_mode=NCDeductionMode.STANDARD,
+    )
+
+    negative_result = compute_nc_tax(scenario_negative)
+    assert negative_result.breakdown["plus_net_nc_interest_dividend_adjustment"] == -1500.0
+
+
+def test_compute_nc_tax_handles_bailey_and_deduction_modes():
+    scenario = TaxScenarioInput(
+        tax_year=2026,
+        state_code="NC",
+        filing_status=FilingStatus.SINGLE,
+        taxpayer_age=60,
+        federal_agi=85000.0,
+        federal_taxable_social_security=3000.0,
+        net_nc_interest_dividend_adjustment=0.0,
+        bailey_exempt_pension_amount=2500.0,
+        nc_deduction_mode=NCDeductionMode.STANDARD,
+    )
+
+    result = compute_nc_tax(scenario)
+    expected_standard_deduction = NC_2026_RULES["standard_deduction_by_filing_status"][scenario.filing_status.value]
+    expected_taxable = 85000.0 - 3000.0 - 2500.0 - expected_standard_deduction
+    assert result.nc_taxable_income == expected_taxable
+    assert result.breakdown["less_bailey_exempt_pension_amount"] == 2500.0
+    assert result.breakdown["selected_nc_deduction_amount"] == expected_standard_deduction
+
+    itemized = TaxScenarioInput(
+        tax_year=2026,
+        state_code="NC",
+        filing_status=FilingStatus.SINGLE,
+        taxpayer_age=61,
+        federal_agi=85000.0,
+        federal_taxable_social_security=3000.0,
+        net_nc_interest_dividend_adjustment=0.0,
+        bailey_exempt_pension_amount=None,
+        nc_deduction_mode=NCDeductionMode.ITEMIZED,
+        nc_itemized_deduction_amount=18000.0,
+    )
+
+    itemized_result = compute_nc_tax(itemized)
+    itemized_expected = 85000.0 - 3000.0 - 18000.0
+    assert itemized_result.nc_taxable_income == itemized_expected
+    assert itemized_result.breakdown["selected_nc_deduction_amount"] == 18000.0
+
+
+def test_compute_nc_tax_zero_floors_and_no_credit_fields():
+    scenario = TaxScenarioInput(
+        tax_year=2026,
+        state_code="NC",
+        filing_status=FilingStatus.SINGLE,
+        taxpayer_age=40,
+        federal_agi=8000.0,
+        federal_taxable_social_security=2000.0,
+        net_nc_interest_dividend_adjustment=0.0,
+        bailey_exempt_pension_amount=None,
+        nc_deduction_mode=NCDeductionMode.STANDARD,
+    )
+
+    result = compute_nc_tax(scenario)
+    assert result.nc_taxable_income == 0.0
+    assert result.nc_income_tax_before_credits == 0.0
+    assert "nc_credit_amount" not in result.__dict__
+
+
+def test_standard_deduction_varies_by_filing_status():
+    single = TaxScenarioInput(
+        tax_year=2026,
+        state_code="NC",
+        filing_status=FilingStatus.SINGLE,
+        taxpayer_age=45,
+        federal_agi=200000.0,
+        federal_taxable_social_security=0.0,
+        nc_deduction_mode=NCDeductionMode.STANDARD,
+    )
+    head = TaxScenarioInput(
+        tax_year=2026,
+        state_code="NC",
+        filing_status=FilingStatus.HEAD_OF_HOUSEHOLD,
+        taxpayer_age=45,
+        federal_agi=200000.0,
+        federal_taxable_social_security=0.0,
+        nc_deduction_mode=NCDeductionMode.STANDARD,
+    )
+    mfj = TaxScenarioInput(
+        tax_year=2026,
+        state_code="NC",
+        filing_status=FilingStatus.MARRIED_FILING_JOINTLY,
+        taxpayer_age=45,
+        spouse_age=42,
+        federal_agi=200000.0,
+        federal_taxable_social_security=0.0,
+        nc_deduction_mode=NCDeductionMode.STANDARD,
+    )
+
+    assert compute_nc_tax(single).breakdown["selected_nc_deduction_amount"] == 12750.0
+    assert compute_nc_tax(head).breakdown["selected_nc_deduction_amount"] == 19125.0
+    assert compute_nc_tax(mfj).breakdown["selected_nc_deduction_amount"] == 25500.0
+
+
+def test_compute_nc_tax_approximate_2025_tie_out_tolerance():
+    scenario = TaxScenarioInput(
+        tax_year=2026,
+        state_code="NC",
+        filing_status=FilingStatus.SINGLE,
+        taxpayer_age=52,
+        federal_agi=82000.0,
+        federal_taxable_social_security=10000.0,
+        net_nc_interest_dividend_adjustment=-750.0,
+        bailey_exempt_pension_amount=0.0,
+        nc_deduction_mode=NCDeductionMode.STANDARD,
+    )
+
+    result = compute_nc_tax(scenario)
+    reference_pre_credit_tax = 2310.0
+
+    assert abs(result.nc_income_tax_before_credits - reference_pre_credit_tax) <= 500.0
+    assert result.nc_income_tax_before_credits >= 0.0

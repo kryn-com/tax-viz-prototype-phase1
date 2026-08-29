@@ -11,5 +11,11 @@ NC_2026_RULES = {
     "supported": True,
     "deduction_modes": ["standard", "itemized"],
     "credits": [],
-    "notes": "Phase 33A scaffold only: no NC tax computation or credit logic implemented.",
+    "standard_deduction_by_filing_status": {
+        "single": 12750.0,
+        "head_of_household": 19125.0,
+        "married_filing_jointly": 25500.0,
+    },
+    "flat_rate": 0.0399,
+    "notes": "Phase 33B simplified NC taxable-income and pre-credit tax calculation only.",
 }
