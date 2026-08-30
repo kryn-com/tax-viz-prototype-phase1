@@ -48,6 +48,48 @@ IRMAA_PROJECTED_2028_RULES = (
         part_d_monthly_surcharge=91.00,
         tier_name="tier_5",
     ),
+    IRMAAThresholdRow(
+        filing_status="married_filing_jointly",
+        threshold_magi=0.0,
+        part_b_monthly_surcharge=0.0,
+        part_d_monthly_surcharge=0.0,
+        tier_name="base",
+    ),
+    IRMAAThresholdRow(
+        filing_status="married_filing_jointly",
+        threshold_magi=226001.0,
+        part_b_monthly_surcharge=89.00,
+        part_d_monthly_surcharge=15.80,
+        tier_name="tier_1",
+    ),
+    IRMAAThresholdRow(
+        filing_status="married_filing_jointly",
+        threshold_magi=286001.0,
+        part_b_monthly_surcharge=224.00,
+        part_d_monthly_surcharge=40.60,
+        tier_name="tier_2",
+    ),
+    IRMAAThresholdRow(
+        filing_status="married_filing_jointly",
+        threshold_magi=358001.0,
+        part_b_monthly_surcharge=358.00,
+        part_d_monthly_surcharge=65.50,
+        tier_name="tier_3",
+    ),
+    IRMAAThresholdRow(
+        filing_status="married_filing_jointly",
+        threshold_magi=430001.0,
+        part_b_monthly_surcharge=492.00,
+        part_d_monthly_surcharge=90.20,
+        tier_name="tier_4",
+    ),
+    IRMAAThresholdRow(
+        filing_status="married_filing_jointly",
+        threshold_magi=750000.0,
+        part_b_monthly_surcharge=537.00,
+        part_d_monthly_surcharge=98.80,
+        tier_name="tier_5",
+    ),
 )
 
 
@@ -57,10 +99,11 @@ def _rows_for_filing_status(filing_status: str) -> tuple[IRMAAThresholdRow, ...]
 
 
 def resolve_projected_2028_irmaa(filing_status: str, magi: Optional[float]) -> IRMAAThresholdRow:
-    if filing_status != "single":
-        raise ValueError("Projected 2028 IRMAA planning mode is currently scoped to single only.")
+    status = validate_filing_status(filing_status)
+    if status not in {"single", "married_filing_jointly"}:
+        raise ValueError("Projected 2028 IRMAA planning mode only supports single and married_filing_jointly.")
     validated_magi = validate_magi(magi)
-    rows = _rows_for_filing_status(filing_status)
+    rows = _rows_for_filing_status(status)
     applicable = rows[0]
     for row in rows[1:]:
         if row.threshold_magi <= validated_magi:
@@ -77,8 +120,8 @@ def build_projected_2028_overlay_result(
     notes: str = "Projected 2028 IRMAA overlay for 2026 planning; estimate only."
 ) -> IRMAAOverlayResult:
     status = validate_filing_status(filing_status)
-    if status != "single":
-        raise ValueError("Projected 2028 IRMAA planning mode is currently scoped to single only.")
+    if status not in {"single", "married_filing_jointly"}:
+        raise ValueError("Projected 2028 IRMAA planning mode only supports single and married_filing_jointly.")
     magi_used = validate_magi(magi)
     row = resolve_projected_2028_irmaa(status, magi_used)
     total_monthly = round(row.part_b_monthly_surcharge + row.part_d_monthly_surcharge, 2)
