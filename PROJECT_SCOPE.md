@@ -174,6 +174,8 @@ Before selecting or implementing a future phase:
 5. Preserve the federal, state-tax, presentation, and IRMAA boundaries.
 6. Do not alter completed tax formulas or engine interfaces without an explicit approved scope change.
 
+A local/manual scenario exploration harness is intentionally planned before Streamlit. It is a validation and discovery layer for existing federal, NC, and IRMAA results, not the final user-facing application.
+
 ## Long-Term Product Vision
 
 The eventual product may accept user-entered scenario variables such as age, filing status, ordinary income, combined LTCG/QD income, Social Security income, deduction selection or amount, nontaxable income, state assumptions, and later Medicare-related assumptions.

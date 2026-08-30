@@ -58,47 +58,77 @@ This should likely be a different phase from the tax-stack layout pass:
 
 This phase is now complete.
 
-### Candidate Phase 35 — Federal Tax Stack Presentation Clarity Pass
+### Candidate Phase 35 — Projected 2028 MFJ IRMAA Planning Support
 
 Scope candidate:
-- accounting-style numeric alignment,
-- improved taxable/non-taxable row presentation,
-- SS wording cleanup,
-- NIIT simplification/removal when not applicable,
-- deduction-zone label and layout cleanup,
-- whitespace reduction,
-- deterministic font modernization if technically safe.
+- estimate-only projected MFJ thresholds and surcharge lookup,
+- explicit metadata retained,
+- no tax-engine coupling, UI, or orchestration.
 
 Out of scope:
-- ordinary-tax engine changes,
-- LTCG/QD engine changes,
-- NIIT formula changes,
+- official premium-year maintenance,
+- federal tax calculation changes,
 - state-tax integration,
-- IRMAA calculation, threshold expansion, or integration,
-- interactive UI,
-- new sliver computations.
+- UI or app work,
+- broader Medicare logic beyond the approved projected planning overlay.
 
-### Candidate Phase 36 — Ordinary-Income Sliver Audit Report
+### Candidate Phase 36 — Manual Scenario Exploration Harness
 
 Scope candidate:
-- one deterministic sliver artifact/report for additional ordinary income,
-- remaining-room-in-current-bracket indicator,
-- explanation of how each additional $100 affects the total federal picture,
-- full federal recomputation for each sliver scenario.
+- small local/manual scenario-entry and result-inspection tool,
+- intended to test many user-created scenarios and identify major issues before Streamlit,
+- reuses existing engines; does not duplicate formulas,
+- output sections remain distinct for federal tax, supported state tax, NIIT, and projected IRMAA.
 
 Out of scope:
-- interactive sliders,
-- LTCG-only sliver mode,
-- state tax,
-- IRMAA,
-- redesign of the baseline tax-stack renderer except for any minimal shared formatting needed by the sliver report.
+- polished consumer UI,
+- new tax formulas,
+- state-credit expansion,
+- IRMAA integration into tax calculations,
+- final product styling or app shell design.
 
-## Next logical deferred options
+### Candidate Phase 37 — Planning Scenario Composition Contract
 
-1. Define a separate composition/display boundary that can present the projected IRMAA overlay alongside a completed planning scenario without coupling it to federal or NC tax computation.
-2. Evaluate projected MFJ IRMAA support only if actual planning scenarios require it and projected inputs are expressly approved.
-3. Maintain or update official IRMAA reference tables only if a clearly defined non-planning use is approved.
-4. Resume the paused federal tax-stack presentation/SVG clarity pass.
+Scope candidate:
+- typed deterministic composition of existing federal, NC, and IRMAA results,
+- no merging of engines or tax calculations,
+- app-ready consumer contract.
+
+Out of scope:
+- user interface implementation,
+- new tax logic,
+- broader state or Medicare behavior beyond the supported results.
+
+### Candidate Phase 38 — Incremental-Income Sliver Analysis
+
+Scope candidate:
+- additional ordinary-income and LTCG/QD analysis,
+- full applicable recomputation of federal tax, supported state tax, NIIT, and projected IRMAA for each altered scenario where inputs and support exist,
+- explain separate federal, state, NIIT, and IRMAA effects where supported.
+
+Out of scope:
+- Streamlit app construction,
+- UI-only simulation,
+- unsupported Medicare logic,
+- tax-core rework beyond scenario recomputation.
+
+### Candidate Phase 39 — Initial Streamlit Planning App
+
+Scope candidate:
+- consumer UI built on already-tested inputs and composed outputs,
+- no new tax logic invented in the UI layer.
+
+Out of scope:
+- re-deriving or reimplementing tax formulas in the front end,
+- arbitrary state or Medicare expansions,
+- broad feature scope before the contract and harness are stable.
+
+## Deferred work
+
+- Federal SVG presentation clarity pass remains a low-priority deferred item.
+- Resume it only if needed to support the manual scenario harness or Streamlit consumer experience.
+- Do not reopen official future premium-year maintenance as a routine obligation.
+- Do not expand tax credits, broader state treatment, or unsupported Medicare logic without explicit approval.
 
 ## Open design questions to resolve before implementation
 
