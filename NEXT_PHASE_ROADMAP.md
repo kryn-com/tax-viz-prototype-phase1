@@ -58,34 +58,39 @@ This should likely be a different phase from the tax-stack layout pass:
 
 This phase is now complete.
 
-### Candidate Phase 35 — Projected 2028 MFJ IRMAA Planning Support
+### Phase 35 — Projected 2028 MFJ IRMAA Planning Support — Complete
+
+Completed scope:
+- Added estimate-only projected 2028 `married_filing_jointly` threshold and surcharge lookup alongside the existing Single path
+- Preserved the existing IRMAA result contract, surcharge math, validation patterns, and estimate metadata
+- Preserved Single projected-overlay behavior unchanged
+- Kept unsupported projected filing statuses rejected
+- Kept IRMAA separate from federal tax, NC tax, UI, and orchestration
+
+Verification:
+- Focused IRMAA projection and contract tests passed
+- Full suite: 219 passed
+
+Still out of scope:
+- Official future-premium-year maintenance
+- HOH, MFS, or other filing-status support
+- Federal-tax or state-tax integration
+- UI, Streamlit, scenario composition, sliver analysis, or presentation work
+
+### Phase 36 — Manual Scenario Exploration Harness
 
 Scope candidate:
-- estimate-only projected MFJ thresholds and surcharge lookup,
-- explicit metadata retained,
-- no tax-engine coupling, UI, or orchestration.
+- Small local/manual scenario-entry and result-inspection tool
+- Reuse existing federal, NC, and projected IRMAA engines without duplicating formulas
+- Keep federal tax, supported state tax, NIIT, and projected IRMAA results visibly separate
+- Use the harness for validation and discovery before Streamlit work
 
 Out of scope:
-- official premium-year maintenance,
-- federal tax calculation changes,
-- state-tax integration,
-- UI or app work,
-- broader Medicare logic beyond the approved projected planning overlay.
-
-### Candidate Phase 36 — Manual Scenario Exploration Harness
-
-Scope candidate:
-- small local/manual scenario-entry and result-inspection tool,
-- intended to test many user-created scenarios and identify major issues before Streamlit,
-- reuses existing engines; does not duplicate formulas,
-- output sections remain distinct for federal tax, supported state tax, NIIT, and projected IRMAA.
-
-Out of scope:
-- polished consumer UI,
-- new tax formulas,
-- state-credit expansion,
-- IRMAA integration into tax calculations,
-- final product styling or app shell design.
+- Polished consumer UI
+- New tax formulas
+- IRMAA integration into tax calculations
+- State-credit expansion
+- Final product styling or app-shell design
 
 ### Candidate Phase 37 — Planning Scenario Composition Contract
 
