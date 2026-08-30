@@ -9,7 +9,7 @@ Plan the next narrow development batch for the federal tax-stack report and rela
 - The repository remains a deterministic 2026 federal tax prototype.
 - Work must stay within one narrow approved phase at a time.
 - Federal tax formulas, supported filing-status policy, and engine interfaces should remain unchanged unless a separate tax-core defect is proven.
-- State tax and IRMAA remain separate future modules or overlays.
+- State tax remains a separate future module; IRMAA is now a separate projected 2028 planning overlay and not a federal tax module.
 - The current baseline includes deterministic SVG generation and curated scenario review artifacts.
 
 ## Requested changes grouped by type
@@ -54,7 +54,11 @@ This should likely be a different phase from the tax-stack layout pass:
 
 ## Recommended phase split
 
-### Candidate Phase 32 — Federal Tax Stack Presentation Clarity Pass
+### Candidate Phase 34 — Projected IRMAA Planning Overlay Completion
+
+This phase is now complete.
+
+### Candidate Phase 35 — Federal Tax Stack Presentation Clarity Pass
 
 Scope candidate:
 - accounting-style numeric alignment,
@@ -70,11 +74,11 @@ Out of scope:
 - LTCG/QD engine changes,
 - NIIT formula changes,
 - state-tax integration,
-- IRMAA,
+- IRMAA calculation, threshold expansion, or integration,
 - interactive UI,
 - new sliver computations.
 
-### Candidate Phase 33 — Ordinary-Income Sliver Audit Report
+### Candidate Phase 36 — Ordinary-Income Sliver Audit Report
 
 Scope candidate:
 - one deterministic sliver artifact/report for additional ordinary income,
@@ -88,6 +92,13 @@ Out of scope:
 - state tax,
 - IRMAA,
 - redesign of the baseline tax-stack renderer except for any minimal shared formatting needed by the sliver report.
+
+## Next logical deferred options
+
+1. Define a separate composition/display boundary that can present the projected IRMAA overlay alongside a completed planning scenario without coupling it to federal or NC tax computation.
+2. Evaluate projected MFJ IRMAA support only if actual planning scenarios require it and projected inputs are expressly approved.
+3. Maintain or update official IRMAA reference tables only if a clearly defined non-planning use is approved.
+4. Resume the paused federal tax-stack presentation/SVG clarity pass.
 
 ## Open design questions to resolve before implementation
 

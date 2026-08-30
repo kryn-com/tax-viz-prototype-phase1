@@ -8,7 +8,7 @@ This document is the durable source of truth for future development sessions and
 
 ## Current Status
 
-Phases 1 through 31 are complete in the current prototype. Phases 22 through 25 completed the baseline federal tax-stack view model and SVG renderer, the deterministic predefined-demo and curated-scenario runner, and related auditability refinements. Phases 26 through 29 corrected and source-audited the supported 2026 ordinary-income bracket tables for Single, Married Filing Jointly, and Head of Household; added reviewed MFJ and HOH scenario fixtures; expanded exact-threshold and scenario-catalog coverage; and documented the resulting validation baseline. Phase 30 reconciled the durable project documentation, clarified that MFS rule-table data is inactive because the federal orchestrator rejects that filing status, and added a manual scenario-validation runbook for independent comparison with external tax calculators. Phase 31 enforced the filing-status standard-deduction floor for explicit deductions when the supplied amount is lower than standard, aligned LTCG/QD stacking with deduction-aware taxable ordinary income, updated direct regression coverage, and reconciled the scenario-runner catalog to the current 25 curated cases. The current verified test baseline is 170 passing tests.
+Phases 1 through 31 are complete in the current prototype. Phases 22 through 25 completed the baseline federal tax-stack view model and SVG renderer, the deterministic predefined-demo and curated-scenario runner, and related auditability refinements. Phases 26 through 29 corrected and source-audited the supported 2026 ordinary-income bracket tables for Single, Married Filing Jointly, and Head of Household; added reviewed MFJ and HOH scenario fixtures; expanded exact-threshold and scenario-catalog coverage; and documented the resulting validation baseline. Phase 30 reconciled the durable project documentation, clarified that MFS rule-table data is inactive because the federal orchestrator rejects that filing status, and added a manual scenario-validation runbook for independent comparison with external tax calculators. Phase 31 enforced the filing-status standard-deduction floor for explicit deductions when the supplied amount is lower than standard, aligned LTCG/QD stacking with deduction-aware taxable ordinary income, updated direct regression coverage, and reconciled the scenario-runner catalog to the current 25 curated cases. Phase 33 added a simplified North Carolina pre-credit planning layer, and Phase 34 added a separate projected 2028 IRMAA planning overlay for evaluating the Medicare premium impact of 2026 MAGI decisions. The latest verified full-suite baseline is 205 passing tests.
 
 Phase 13 completed state-contract and state-tax policy test hardening. No production code changed, and the full test suite passed with 90 tests.
 
@@ -121,7 +121,7 @@ The following remain outside the current approved product scope:
 - Baseline tax-stack view-model and renderer work beyond the current federal chart surface
 - General-purpose CLI behavior, serialization, export architecture, and chart-library integration
 - Progressive and multi-bracket state income-tax calculations
-- IRMAA calculations or Medicare-premium determinations
+- IRMAA calculation expansion, threshold expansion, tax-result integration, or official premium-year maintenance beyond the completed projected single-filer planning overlay
 - Tax credits
 - Alternative Minimum Tax
 - Payroll tax, self-employment tax, and business-entity taxation
@@ -141,7 +141,8 @@ Do not silently invent deduction allocation, income characterization, state-tax 
 - Each major calculation engine must retain enough structured output to explain its result.
 - Federal tax logic must remain separate from presentation logic.
 - State tax remains separate from federal tax and must have its own display adapter or visual zone rather than being folded into federal tax results.
-- IRMAA remains a separate future economic Medicare-surcharge overlay, not federal income tax.
+- IRMAA is now a separate, estimate-only planning overlay for projected 2028 premium impact from 2026 MAGI decisions; it is not federal income tax.
+- The active supported IRMAA use is projected 2028 single-filer planning only; broader or official premium-year maintenance is intentionally deferred.
 - Taxable Social Security explanation and NIIT notices or overlays are semantic presentation elements of the baseline federal tax-stack view model.
 - LTCG and qualified dividends remain one combined preferential-income input for this prototype.
 - Chart view models remain immutable, deterministic, and independent of any specific chart library.
@@ -156,7 +157,7 @@ No future phase is approved by this document. The following roadmap is direction
 1. Baseline tax-stack view model, including taxable Social Security explanation and NIIT notices or overlays as required semantic elements
 2. Baseline tax-stack renderer
 3. Separate state-tax display adapter and visual zone
-4. Separate IRMAA economic-overlay module
+4. Separate IRMAA planning-overlay composition or display, preserving its boundary from tax computation
 5. Sliver and marginal chart view models
 6. Sliver renderer
 7. Controlled scenario catalog
@@ -190,7 +191,7 @@ The baseline renderer should present those federal semantic elements visually. T
 
 State tax should be represented through a separate display adapter and separate state-tax visual zone. It should not be folded into the federal tax stack.
 
-IRMAA should be added later as a separate economic-overlay module. It should be shown as a Medicare-surcharge effect, never as federal income tax.
+IRMAA is implemented as a separate, estimate-only planning overlay for projected 2028 premium impact from 2026 MAGI decisions. It should be shown as a Medicare-surcharge effect, never as federal income tax.
 
 The product may also provide marginal or sliver analysis for:
 
@@ -201,4 +202,4 @@ The product may also provide marginal or sliver analysis for:
 
 Federal tax logic, state tax, presentation, and IRMAA must remain distinct architectural concerns. Federal tax calculations should feed presentation models; state tax should use a separate tax and display boundary; and IRMAA should be represented as an economic Medicare-surcharge overlay rather than federal income tax.
 
-This vision is directional only. It does not approve implementation of user inputs, interactive UI, state integration, IRMAA calculations, or any other future capability.
+This vision is directional only. It does not approve implementation of user inputs, interactive UI, state integration, expanded IRMAA support beyond the completed projected single-filer planning overlay, or any other future capability.
