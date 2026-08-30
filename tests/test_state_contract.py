@@ -6,6 +6,14 @@ from pydantic import ValidationError
 from engines.state_policy import STATE_SUPPORT_POLICY, classify_state, require_supported_state
 from engines.state_tax import compute_nc_tax
 from models.inputs import FilingStatus, NCDeductionMode, TaxScenarioInput
+from models.nc_planning import NCPlanningResult, compose_nc_planning_result
+from models.outputs import (
+    FederalOrdinaryOutput,
+    FederalTaxResult,
+    LTCG_QD_Output,
+    NIITOutput,
+    SocialSecurityOutput,
+)
 from models.state import (
     StateTaxRequest,
     StateTaxResult,
@@ -316,6 +324,96 @@ def test_compute_nc_tax_handles_bailey_and_deduction_modes():
     itemized_expected = 85000.0 - 3000.0 - 18000.0
     assert itemized_result.nc_taxable_income == itemized_expected
     assert itemized_result.breakdown["selected_nc_deduction_amount"] == 18000.0
+
+
+def _make_nc_scenario() -> TaxScenarioInput:
+    return TaxScenarioInput(
+        tax_year=2026,
+        state_code="NC",
+        filing_status=FilingStatus.SINGLE,
+        taxpayer_age=45,
+        federal_agi=100000.0,
+        federal_taxable_social_security=5000.0,
+        net_nc_interest_dividend_adjustment=0.0,
+        bailey_exempt_pension_amount=None,
+        nc_deduction_mode=NCDeductionMode.STANDARD,
+    )
+
+
+def _make_minimal_federal_result(scenario: TaxScenarioInput) -> FederalTaxResult:
+    return FederalTaxResult(
+        scenario=scenario,
+        agi=100000.0,
+        magi=100000.0,
+        taxable_ordinary_income=50000.0,
+        taxable_preferential_income=0.0,
+        ss_output=SocialSecurityOutput(
+            total_social_security=0.0,
+            taxable_social_security=0.0,
+            tax_free_social_security=0.0,
+            provisional_income=0.0,
+        ),
+        ordinary_output=FederalOrdinaryOutput(
+            ordinary_income=50000.0,
+            deduction_applied=0.0,
+            taxable_ordinary_income=50000.0,
+            total_tax=0.0,
+            bracket_trace=[],
+        ),
+        ltcg_qd_output=LTCG_QD_Output(
+            total_preferential_income=0.0,
+            taxed_at_0=0.0,
+            taxed_at_15=0.0,
+            taxed_at_20=0.0,
+            total_preferential_tax=0.0,
+        ),
+        niit_output=NIITOutput(
+            net_investment_income=0.0,
+            magi=100000.0,
+            threshold_applied=0.0,
+            magi_over_threshold=0.0,
+            tax_base=0.0,
+            niit_rate=0.0,
+            niit_tax=0.0,
+        ),
+        ordinary_tax=0.0,
+        ltcg_qd_tax=0.0,
+        niit_tax=0.0,
+        total_federal_tax=0.0,
+    )
+
+
+def test_nc_planning_result_is_immutable():
+    scenario = _make_nc_scenario()
+    federal_result = _make_minimal_federal_result(scenario)
+    nc_result = compute_nc_tax(scenario)
+    result = NCPlanningResult(federal_result=federal_result, nc_state_result=nc_result)
+
+    with pytest.raises(FrozenInstanceError):
+        result.federal_result = federal_result
+
+
+def test_compose_nc_planning_result_preserves_exact_object_identity():
+    scenario = _make_nc_scenario()
+    federal_result = _make_minimal_federal_result(scenario)
+    nc_result = compute_nc_tax(scenario)
+
+    composed = compose_nc_planning_result(federal_result, nc_result)
+
+    assert composed.federal_result is federal_result
+    assert composed.nc_state_result is nc_result
+
+
+def test_composed_nc_planning_result_has_no_combined_total_field():
+    scenario = _make_nc_scenario()
+    federal_result = _make_minimal_federal_result(scenario)
+    nc_result = compute_nc_tax(scenario)
+
+    composed = compose_nc_planning_result(federal_result, nc_result)
+
+    assert set(composed.__dict__) == {"federal_result", "nc_state_result"}
+    assert not hasattr(composed, "combined_tax_total")
+    assert not hasattr(composed, "total_tax")
 
 
 def test_compute_nc_tax_zero_floors_and_no_credit_fields():
