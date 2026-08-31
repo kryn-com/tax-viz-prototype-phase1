@@ -27,6 +27,55 @@ SCENARIO = {
     "deduction_amount": 0.0,
 }
 
+PHASE_38A_REQUIRED_BASE_INPUT_COLUMNS = frozenset({
+    "case_id",
+    "scenario_name",
+    "tax_year",
+    "state_code",
+    "filing_status",
+    "taxpayer_age",
+    "ordinary_income",
+    "ltcg_qd_income",
+    "social_security_income",
+    "nontaxable_income",
+    "deduction_mode",
+    "deduction_amount",
+    "net_nc_interest_dividend_adjustment",
+    "nc_deduction_mode",
+})
+
+PHASE_38A_OPTIONAL_BASE_OR_OVERRIDE_COLUMNS = frozenset({
+    "spouse_age",
+    "bailey_exempt_pension_amount",
+    "nc_itemized_deduction_amount",
+    "federal_agi",
+    "federal_taxable_social_security",
+})
+
+PHASE_38A_OPTIONAL_EXPECTED_ANSWER_COLUMNS = frozenset({
+    "expected_federal_total_tax",
+    "expected_ordinary_tax",
+    "expected_ltcg_qd_tax",
+    "expected_niit_tax",
+    "expected_nc_tax",
+    "expected_projected_irmaa_2028_premium",
+    "expected_projected_irmaa_2028_surcharge",
+    "expected_status",
+    "expected_notes",
+})
+
+PHASE_38A_OPTIONAL_METADATA_STATUS_COLUMNS = frozenset({
+    "status",
+    "owner",
+    "reviewer",
+    "source",
+    "tags",
+    "last_run_date",
+    "validation_status",
+    "notes",
+    "issue_id",
+})
+
 
 def write_fixture(directory: Path, name: str, **overrides) -> Path:
     payload = {
@@ -39,6 +88,27 @@ def write_fixture(directory: Path, name: str, **overrides) -> Path:
     path = directory / f"{name}.json"
     path.write_text(json.dumps(payload), encoding="utf-8")
     return path
+
+
+def test_phase_38a_contract_definition_freezes_approved_column_groups():
+    required = PHASE_38A_REQUIRED_BASE_INPUT_COLUMNS
+    optional_override = PHASE_38A_OPTIONAL_BASE_OR_OVERRIDE_COLUMNS
+    expected = PHASE_38A_OPTIONAL_EXPECTED_ANSWER_COLUMNS
+    metadata = PHASE_38A_OPTIONAL_METADATA_STATUS_COLUMNS
+
+    assert required.isdisjoint(optional_override)
+    assert required.isdisjoint(expected)
+    assert required.isdisjoint(metadata)
+    assert optional_override.isdisjoint(expected)
+    assert optional_override.isdisjoint(metadata)
+    assert expected.isdisjoint(metadata)
+
+    column_union = required | optional_override | expected | metadata
+    assert len(column_union) == 37
+    assert "federal_agi" in optional_override
+    assert "federal_taxable_social_security" in optional_override
+    assert "federal_agi" not in required
+    assert "federal_taxable_social_security" not in required
 
 
 def test_load_scenario_fixture_validates_native_tax_input():
