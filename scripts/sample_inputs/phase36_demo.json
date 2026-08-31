@@ -1,0 +1,21 @@
+{
+  "scenario": {
+    "tax_year": 2026,
+    "state_code": "NC",
+    "filing_status": "single",
+    "taxpayer_age": 45,
+    "spouse_age": null,
+    "ordinary_income": 120000.0,
+    "ltcg_qd_income": 20000.0,
+    "social_security_income": 15000.0,
+    "nontaxable_income": 0.0,
+    "federal_agi": 0.0,
+    "federal_taxable_social_security": 0.0,
+    "net_nc_interest_dividend_adjustment": 0.0,
+    "bailey_exempt_pension_amount": null,
+    "nc_deduction_mode": "standard",
+    "nc_itemized_deduction_amount": null,
+    "deduction_mode": "standard",
+    "deduction_amount": 0.0
+  }
+}
