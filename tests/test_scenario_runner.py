@@ -140,6 +140,34 @@ def test_phase_38a_deferred_validation_boundary_is_documentation_only():
     assert deferred_behaviors.isdisjoint(runtime_fixture_schema_keys)
 
 
+def test_phase_38a_audit_evidence_metadata_contract_test():
+    required = PHASE_38A_REQUIRED_BASE_INPUT_COLUMNS
+    optional_override = PHASE_38A_OPTIONAL_BASE_OR_OVERRIDE_COLUMNS
+    expected = PHASE_38A_OPTIONAL_EXPECTED_ANSWER_COLUMNS
+    metadata = PHASE_38A_OPTIONAL_METADATA_STATUS_COLUMNS
+    audit_evidence_fields = frozenset({
+        "source",
+        "reviewer",
+        "last_run_date",
+        "validation_status",
+        "notes",
+        "issue_id",
+    })
+
+    assert audit_evidence_fields == frozenset({
+        "source",
+        "reviewer",
+        "last_run_date",
+        "validation_status",
+        "notes",
+        "issue_id",
+    })
+    assert audit_evidence_fields <= metadata
+    assert audit_evidence_fields.isdisjoint(required)
+    assert audit_evidence_fields.isdisjoint(optional_override)
+    assert audit_evidence_fields.isdisjoint(expected)
+
+
 def test_load_scenario_fixture_validates_native_tax_input():
     path = write_fixture(Path(__file__).parent, "unused")
     try:
