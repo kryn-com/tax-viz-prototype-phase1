@@ -77,6 +77,58 @@ PHASE_38A_OPTIONAL_METADATA_STATUS_COLUMNS = frozenset({
 })
 
 
+def test_phase_38a_csv_sample_bank_header_and_row_contract():
+    csv_path = Path(__file__).parent / "fixtures" / "phase38a_sample_bank.csv"
+    approved_order = (
+        "case_id",
+        "scenario_name",
+        "tax_year",
+        "state_code",
+        "filing_status",
+        "taxpayer_age",
+        "ordinary_income",
+        "ltcg_qd_income",
+        "social_security_income",
+        "nontaxable_income",
+        "deduction_mode",
+        "deduction_amount",
+        "net_nc_interest_dividend_adjustment",
+        "nc_deduction_mode",
+        "spouse_age",
+        "bailey_exempt_pension_amount",
+        "nc_itemized_deduction_amount",
+        "federal_agi",
+        "federal_taxable_social_security",
+        "expected_federal_total_tax",
+        "expected_ordinary_tax",
+        "expected_ltcg_qd_tax",
+        "expected_niit_tax",
+        "expected_nc_tax",
+        "expected_projected_irmaa_2028_premium",
+        "expected_projected_irmaa_2028_surcharge",
+        "expected_status",
+        "expected_notes",
+        "status",
+        "owner",
+        "reviewer",
+        "source",
+        "tags",
+        "last_run_date",
+        "validation_status",
+        "notes",
+        "issue_id",
+    )
+
+    with csv_path.open("r", encoding="utf-8", newline="") as csv_file:
+        import csv
+
+        rows = list(csv.reader(csv_file))
+
+    assert len(rows) == 2
+    assert rows[0] == list(approved_order)
+    assert len(rows[1]) == len(rows[0])
+
+
 def write_fixture(directory: Path, name: str, **overrides) -> Path:
     payload = {
         "schema_version": 1,
