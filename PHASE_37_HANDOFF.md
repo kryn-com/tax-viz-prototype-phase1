@@ -63,6 +63,6 @@ The implementation keeps all domains separate and does not introduce any new orc
 - The supported projected IRMAA statuses remain limited to `single` and `married_filing_jointly`.
 
 ## Recommended next decision
-Proceed to Phase 38 - Incremental-Income Sliver Analysis.
+Proceed to Phase 38A first as the narrow preparation step for the scenario validation bank.
 
-This remains the narrow next follow-up: recompute the applicable federal pipeline for incremental ordinary and LTCG/QD scenarios while preserving the existing federal, NC, NIIT, and projected IRMAA boundaries.
+This is the next approved detour: define the spreadsheet contract, expected-answer columns, and audit requirements in `PHASE_38A_PROJECT_PLAN.md`, while preserving the existing federal, NC, NIIT, and projected IRMAA boundaries. The follow-on Phase 38B should then implement the larger two-pass manual summary runner and official-source rounding audit before any sliver-analysis work begins.
