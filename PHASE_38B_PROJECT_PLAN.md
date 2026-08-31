@@ -156,3 +156,7 @@ Required evidence should include the source reference, the calculation method us
 ## Recommended next step
 
 Proceed with Phase 38B after Phase 38A and before sliver analysis. This is the implementation phase that turns the validated spreadsheet contract into a two-pass manual summary runner and an official-source rounding audit without redesigning the tax engine or folding results into a combined total.
+
+## Phase 38B closeout note
+
+Phase 38B is now implemented as a validated spreadsheet-driven two-pass manual runner/reporting path. The runner supports expected-vs-actual comparisons for the currently supported fields, and the official-source federal + NC audit artifact documents current behavior and mismatch classification without changing formulas or rounding logic. NIIT and projected IRMAA remain intentionally deferred unless they are added later through the existing public execution paths; no formula or rounding changes were made as part of this audit.

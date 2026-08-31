@@ -4,12 +4,30 @@ from xml.etree import ElementTree
 
 import pytest
 
+from engines.federal_orchestrator import orchestrate_federal_tax
+from models.inputs import TaxScenarioInput
 from scripts.scenario_runner import (
     EXPECTED_TOLERANCE,
+    build_nc_defaults_from_federal_result,
+    build_nc_ready_input_fragment,
+    build_official_source_audit_report,
+    build_single_row_expected_vs_actual_payload,
+    build_single_row_summary_payload,
+    classify_audit_difference,
+    classify_nc_input_source,
+    compose_nc_ready_input_fragment,
+    compose_nc_ready_input_fragment_from_federal_result,
     discover_scenario_paths,
+    load_scenario_bank_csv,
     load_scenario_fixture,
+    render_single_case_summary,
+    resolve_nc_override_aware_values,
     run_all_scenarios,
     run_scenario,
+    run_scenario_bank_csv_cases,
+    run_single_row_combined_two_pass,
+    run_single_row_federal_pass_1_and_build_nc_ready_fragment,
+    run_single_row_nc_pass_2,
 )
 from scripts import scenario_runner
 
@@ -77,6 +95,327 @@ PHASE_38A_OPTIONAL_METADATA_STATUS_COLUMNS = frozenset({
 })
 
 
+def _sample_bank_row() -> dict[str, str]:
+    csv_path = Path(__file__).parent / "fixtures" / "phase38a_sample_bank.csv"
+
+    with csv_path.open("r", encoding="utf-8", newline="") as csv_file:
+        import csv
+
+        rows = list(csv.DictReader(csv_file))
+
+    assert len(rows) == 1
+    return rows[0]
+
+
+def test_load_scenario_bank_csv_reads_sample_bank_row_with_blank_optional_cells_preserved():
+    csv_path = Path(__file__).parent / "fixtures" / "phase38a_sample_bank.csv"
+
+    rows = load_scenario_bank_csv(csv_path)
+
+    assert len(rows) == 1
+    sample_row = rows[0]
+    assert sample_row["case_id"] == "single_case_001"
+    assert sample_row["federal_agi"] == ""
+    assert sample_row["federal_taxable_social_security"] == ""
+    assert sample_row["expected_federal_total_tax"] == ""
+
+
+def test_load_scenario_bank_csv_requires_required_base_fields(tmp_path):
+    csv_path = tmp_path / "invalid_required_fields.csv"
+    csv_path.write_text(
+        "case_id,tax_year,state_code,filing_status,taxpayer_age,ordinary_income,ltcg_qd_income,social_security_income,nontaxable_income,deduction_mode,deduction_amount,nc_deduction_mode\n"
+        "single_case_001,2026,,single,45,60000,0,0,0,standard,0,standard\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="missing required base fields: state_code"):
+        load_scenario_bank_csv(csv_path)
+
+
+def test_load_scenario_bank_csv_requires_execution_ready_fields(tmp_path):
+    csv_path = tmp_path / "missing_execution_ready_field.csv"
+    csv_path.write_text(
+        "case_id,tax_year,state_code,filing_status,taxpayer_age,ordinary_income,ltcg_qd_income,social_security_income,nontaxable_income,deduction_mode,deduction_amount,nc_deduction_mode\n"
+        "single_case_001,2026,NC,single,45,60000,0,0,,standard,0,standard\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="missing required base fields: nontaxable_income"):
+        load_scenario_bank_csv(csv_path)
+
+
+def test_load_scenario_bank_csv_requires_required_base_headers(tmp_path):
+    csv_path = tmp_path / "missing_required_header.csv"
+    csv_path.write_text(
+        "case_id,tax_year,filing_status,ordinary_income,ltcg_qd_income,social_security_income,deduction_mode,nc_deduction_mode\n"
+        "single_case_001,2026,single,60000,0,0,standard,standard\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="missing required base headers: state_code"):
+        load_scenario_bank_csv(csv_path)
+
+
+def test_classify_nc_input_source_derived_when_optional_overrides_are_blank():
+    row = _sample_bank_row()
+
+    assert classify_nc_input_source(row) == "derived"
+
+
+def test_classify_nc_input_source_manual_override_when_any_optional_override_is_populated():
+    row = _sample_bank_row()
+    row["federal_agi"] = "48000"
+
+    assert classify_nc_input_source(row) == "manual_override"
+
+    row["federal_agi"] = ""
+    row["federal_taxable_social_security"] = "18000"
+    assert classify_nc_input_source(row) == "manual_override"
+
+
+def test_resolve_nc_override_aware_values_uses_surrogate_defaults_when_both_overrides_are_blank():
+    row = _sample_bank_row()
+    surrogate = {
+        "federal_agi": "60000",
+        "federal_taxable_social_security": "18000",
+    }
+
+    resolved = resolve_nc_override_aware_values(row, surrogate)
+
+    assert resolved["federal_agi"] == "60000"
+    assert resolved["federal_taxable_social_security"] == "18000"
+    assert resolved["nc_input_source"] == "derived"
+
+
+def test_resolve_nc_override_aware_values_uses_row_value_for_single_populated_override():
+    row = _sample_bank_row()
+    row["federal_agi"] = "48000"
+    surrogate = {
+        "federal_agi": "60000",
+        "federal_taxable_social_security": "18000",
+    }
+
+    resolved = resolve_nc_override_aware_values(row, surrogate)
+
+    assert resolved["federal_agi"] == "48000"
+    assert resolved["federal_taxable_social_security"] == "18000"
+    assert resolved["nc_input_source"] == "manual_override"
+
+
+def test_resolve_nc_override_aware_values_uses_row_values_when_both_overrides_are_populated():
+    row = _sample_bank_row()
+    row["federal_agi"] = "48000"
+    row["federal_taxable_social_security"] = "20000"
+    surrogate = {
+        "federal_agi": "60000",
+        "federal_taxable_social_security": "18000",
+    }
+
+    resolved = resolve_nc_override_aware_values(row, surrogate)
+
+    assert resolved["federal_agi"] == "48000"
+    assert resolved["federal_taxable_social_security"] == "20000"
+    assert resolved["nc_input_source"] == "manual_override"
+
+
+def test_load_scenario_bank_csv_reports_row_2_missing_required_base_field(tmp_path):
+    csv_path = tmp_path / "row_2_missing_required_field.csv"
+    csv_path.write_text(
+        "case_id,tax_year,state_code,filing_status,taxpayer_age,ordinary_income,ltcg_qd_income,social_security_income,nontaxable_income,deduction_mode,deduction_amount,nc_deduction_mode\n"
+        "single_case_001,2026,NC,single,45,60000,0,0,0,standard,0,standard\n"
+        "single_case_002,2026,,single,45,60000,0,0,0,standard,0,standard\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match=r"row 2.*state_code"):
+        load_scenario_bank_csv(csv_path)
+
+
+def test_build_nc_ready_input_fragment_uses_derived_values():
+    row = _sample_bank_row()
+    resolved = {
+        "federal_agi": "60000",
+        "federal_taxable_social_security": "18000",
+        "nc_input_source": "derived",
+    }
+
+    fragment = build_nc_ready_input_fragment(row, resolved)
+
+    assert fragment == {
+        "state_code": "NC",
+        "filing_status": "single",
+        "federal_agi": "60000",
+        "federal_taxable_social_security": "18000",
+        "nc_deduction_mode": "standard",
+        "nc_input_source": "derived",
+    }
+
+
+def test_build_nc_ready_input_fragment_uses_manual_override_values():
+    row = _sample_bank_row()
+    row["federal_agi"] = "48000"
+    row["federal_taxable_social_security"] = "20000"
+    resolved = {
+        "federal_agi": "48000",
+        "federal_taxable_social_security": "20000",
+        "nc_input_source": "manual_override",
+    }
+
+    fragment = build_nc_ready_input_fragment(row, resolved)
+
+    assert fragment == {
+        "state_code": "NC",
+        "filing_status": "single",
+        "federal_agi": "48000",
+        "federal_taxable_social_security": "20000",
+        "nc_deduction_mode": "standard",
+        "nc_input_source": "manual_override",
+    }
+
+
+def test_build_nc_defaults_from_federal_result_uses_real_federal_result_values():
+    scenario = TaxScenarioInput(**SCENARIO)
+    federal_result = orchestrate_federal_tax(scenario)
+
+    surrogate = build_nc_defaults_from_federal_result(federal_result)
+
+    assert surrogate == {
+        "federal_agi": str(federal_result.agi),
+        "federal_taxable_social_security": str(federal_result.ss_output.taxable_social_security),
+    }
+
+
+def test_run_single_row_federal_pass_1_and_build_nc_ready_fragment_derived_from_real_result_when_row_overrides_are_blank():
+    row = _sample_bank_row()
+
+    result = run_single_row_federal_pass_1_and_build_nc_ready_fragment(row)
+
+    federal_result = result["federal_result"]
+    fragment = result["nc_ready_input_fragment"]
+
+    assert isinstance(federal_result, object)
+    assert federal_result.agi == float(fragment["federal_agi"])
+    assert federal_result.ss_output.taxable_social_security == float(fragment["federal_taxable_social_security"])
+    assert fragment == {
+        "state_code": "NC",
+        "filing_status": "single",
+        "federal_agi": str(federal_result.agi),
+        "federal_taxable_social_security": str(federal_result.ss_output.taxable_social_security),
+        "nc_deduction_mode": "standard",
+        "nc_input_source": "derived",
+    }
+
+
+def test_run_single_row_federal_pass_1_and_build_nc_ready_fragment_prefers_manual_override_values():
+    row = _sample_bank_row()
+    row["federal_agi"] = "48000"
+    row["federal_taxable_social_security"] = "20000"
+
+    result = run_single_row_federal_pass_1_and_build_nc_ready_fragment(row)
+
+    federal_result = result["federal_result"]
+    fragment = result["nc_ready_input_fragment"]
+
+    assert isinstance(federal_result, object)
+    assert fragment == {
+        "state_code": "NC",
+        "filing_status": "single",
+        "federal_agi": "48000",
+        "federal_taxable_social_security": "20000",
+        "nc_deduction_mode": "standard",
+        "nc_input_source": "manual_override",
+    }
+    assert federal_result.agi != float(fragment["federal_agi"]) or federal_result.ss_output.taxable_social_security != float(fragment["federal_taxable_social_security"])
+
+
+def test_compose_nc_ready_input_fragment_from_federal_result_uses_derived_defaults_when_row_overrides_are_blank():
+    row = _sample_bank_row()
+    federal_result = orchestrate_federal_tax(TaxScenarioInput(**SCENARIO))
+
+    fragment = compose_nc_ready_input_fragment_from_federal_result(row, federal_result)
+
+    assert fragment == {
+        "state_code": "NC",
+        "filing_status": "single",
+        "federal_agi": str(federal_result.agi),
+        "federal_taxable_social_security": str(federal_result.ss_output.taxable_social_security),
+        "nc_deduction_mode": "standard",
+        "nc_input_source": "derived",
+    }
+
+
+def test_compose_nc_ready_input_fragment_from_federal_result_prefers_row_manual_overrides():
+    row = _sample_bank_row()
+    row["federal_agi"] = "48000"
+    row["federal_taxable_social_security"] = "20000"
+    federal_result = orchestrate_federal_tax(TaxScenarioInput(**SCENARIO))
+
+    fragment = compose_nc_ready_input_fragment_from_federal_result(row, federal_result)
+
+    assert fragment == {
+        "state_code": "NC",
+        "filing_status": "single",
+        "federal_agi": "48000",
+        "federal_taxable_social_security": "20000",
+        "nc_deduction_mode": "standard",
+        "nc_input_source": "manual_override",
+    }
+
+
+def test_compose_nc_ready_input_fragment_uses_surrogate_defaults_when_overrides_are_blank():
+    row = _sample_bank_row()
+    federal_pass_values = {
+        "federal_agi": "60000",
+        "federal_taxable_social_security": "18000",
+    }
+
+    fragment = compose_nc_ready_input_fragment(row, federal_pass_values)
+
+    assert fragment == {
+        "state_code": "NC",
+        "filing_status": "single",
+        "federal_agi": "60000",
+        "federal_taxable_social_security": "18000",
+        "nc_deduction_mode": "standard",
+        "nc_input_source": "derived",
+    }
+
+
+def test_compose_nc_ready_input_fragment_uses_manual_override_values_when_present():
+    row = _sample_bank_row()
+    row["federal_agi"] = "48000"
+    row["federal_taxable_social_security"] = "20000"
+    federal_pass_values = {
+        "federal_agi": "60000",
+        "federal_taxable_social_security": "18000",
+    }
+
+    fragment = compose_nc_ready_input_fragment(row, federal_pass_values)
+
+    assert fragment == {
+        "state_code": "NC",
+        "filing_status": "single",
+        "federal_agi": "48000",
+        "federal_taxable_social_security": "20000",
+        "nc_deduction_mode": "standard",
+        "nc_input_source": "manual_override",
+    }
+
+
+def test_load_scenario_bank_csv_stops_on_first_failing_row(tmp_path):
+    csv_path = tmp_path / "first_failing_row.csv"
+    csv_path.write_text(
+        "case_id,tax_year,state_code,filing_status,taxpayer_age,ordinary_income,ltcg_qd_income,social_security_income,nontaxable_income,deduction_mode,deduction_amount,nc_deduction_mode\n"
+        "single_case_001,2026,NC,single,45,60000,0,0,0,standard,0,standard\n"
+        "single_case_002,2026,,single,45,60000,0,0,0,standard,0,standard\n"
+        "single_case_003,2026,,single,45,60000,0,0,0,standard,0,standard\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match=r"row 2.*state_code"):
+        load_scenario_bank_csv(csv_path)
+
+
 def test_phase_38a_csv_sample_bank_header_and_row_contract():
     csv_path = Path(__file__).parent / "fixtures" / "phase38a_sample_bank.csv"
     approved_order = (
@@ -129,6 +468,38 @@ def test_phase_38a_csv_sample_bank_header_and_row_contract():
     assert len(rows[1]) == len(rows[0])
 
 
+def test_phase_38b_blank_optional_expected_result_cells_are_allowed_and_remain_blank():
+    sample_row = _sample_bank_row()
+    assert sample_row["expected_federal_total_tax"] == ""
+    assert sample_row["expected_nc_tax"] == ""
+    assert sample_row["expected_projected_irmaa_2028_premium"] == ""
+
+
+def test_phase_38b_required_base_inputs_remain_populated_while_optional_override_and_expected_cells_can_be_blank():
+    sample_row = _sample_bank_row()
+
+    required_fields = (
+        "case_id",
+        "tax_year",
+        "state_code",
+        "filing_status",
+        "ordinary_income",
+        "ltcg_qd_income",
+        "social_security_income",
+        "deduction_mode",
+        "nc_deduction_mode",
+    )
+
+    for field in required_fields:
+        assert sample_row[field] != ""
+
+    assert sample_row["federal_agi"] == ""
+    assert sample_row["federal_taxable_social_security"] == ""
+    assert sample_row["expected_federal_total_tax"] == ""
+    assert sample_row["expected_nc_tax"] == ""
+    assert sample_row["expected_projected_irmaa_2028_premium"] == ""
+
+
 def write_fixture(directory: Path, name: str, **overrides) -> Path:
     payload = {
         "schema_version": 1,
@@ -140,6 +511,234 @@ def write_fixture(directory: Path, name: str, **overrides) -> Path:
     path = directory / f"{name}.json"
     path.write_text(json.dumps(payload), encoding="utf-8")
     return path
+
+
+def test_run_single_row_federal_pass_1_and_build_nc_ready_fragment_requires_documented_execution_fields():
+    row = _sample_bank_row()
+    row.pop("nontaxable_income", None)
+
+    with pytest.raises(ValueError, match="missing required fields: nontaxable_income"):
+        run_single_row_federal_pass_1_and_build_nc_ready_fragment(row)
+
+
+def test_run_single_row_federal_pass_1_and_build_nc_ready_fragment_executes_complete_row():
+    row = _sample_bank_row()
+
+    result = run_single_row_federal_pass_1_and_build_nc_ready_fragment(row)
+
+    fragment = result["nc_ready_input_fragment"]
+    assert fragment["nc_input_source"] == "derived"
+    assert fragment["federal_agi"] == str(result["federal_result"].agi)
+    assert fragment["federal_taxable_social_security"] == str(result["federal_result"].ss_output.taxable_social_security)
+    assert fragment["state_code"] == "NC"
+    assert fragment["filing_status"] == "single"
+
+
+def test_run_single_row_nc_pass_2_uses_derived_federal_defaults_when_overrides_are_blank():
+    row = _sample_bank_row()
+    pass_1_result = run_single_row_federal_pass_1_and_build_nc_ready_fragment(row)
+
+    nc_pass_2 = run_single_row_nc_pass_2(row, pass_1_result["nc_ready_input_fragment"])
+
+    assert nc_pass_2["nc_input"].federal_agi == float(pass_1_result["nc_ready_input_fragment"]["federal_agi"])
+    assert nc_pass_2["nc_input"].federal_taxable_social_security == float(
+        pass_1_result["nc_ready_input_fragment"]["federal_taxable_social_security"]
+    )
+    assert nc_pass_2["nc_result"].breakdown["starting_federal_agi"] == float(
+        pass_1_result["nc_ready_input_fragment"]["federal_agi"]
+    )
+    assert nc_pass_2["nc_result"].breakdown["less_federal_taxable_social_security"] == float(
+        pass_1_result["nc_ready_input_fragment"]["federal_taxable_social_security"]
+    )
+
+
+def test_run_single_row_nc_pass_2_prefers_manual_override_values_when_present():
+    row = _sample_bank_row()
+    row["federal_agi"] = "48000"
+    row["federal_taxable_social_security"] = "20000"
+    pass_1_result = run_single_row_federal_pass_1_and_build_nc_ready_fragment(row)
+
+    nc_pass_2 = run_single_row_nc_pass_2(row, pass_1_result["nc_ready_input_fragment"])
+
+    assert nc_pass_2["nc_input"].federal_agi == 48000.0
+    assert nc_pass_2["nc_input"].federal_taxable_social_security == 20000.0
+    assert nc_pass_2["nc_result"].breakdown["starting_federal_agi"] == 48000.0
+    assert nc_pass_2["nc_result"].breakdown["less_federal_taxable_social_security"] == 20000.0
+
+
+def test_run_single_row_combined_two_pass_uses_derived_nc_input_source_when_overrides_are_blank():
+    row = _sample_bank_row()
+
+    bundle = run_single_row_combined_two_pass(row)
+
+    assert bundle["nc_input_source"] == "derived"
+    assert bundle["nc_ready_input_fragment"]["nc_input_source"] == "derived"
+    assert bundle["nc_input"].federal_agi == float(bundle["nc_ready_input_fragment"]["federal_agi"])
+    assert bundle["nc_input"].federal_taxable_social_security == float(
+        bundle["nc_ready_input_fragment"]["federal_taxable_social_security"]
+    )
+    assert bundle["nc_result"].breakdown["starting_federal_agi"] == float(
+        bundle["nc_ready_input_fragment"]["federal_agi"]
+    )
+
+
+def test_run_single_row_combined_two_pass_prefers_manual_override_values_when_present():
+    row = _sample_bank_row()
+    row["federal_agi"] = "48000"
+    row["federal_taxable_social_security"] = "20000"
+
+    bundle = run_single_row_combined_two_pass(row)
+
+    assert bundle["nc_input_source"] == "manual_override"
+    assert bundle["nc_ready_input_fragment"]["federal_agi"] == "48000"
+    assert bundle["nc_ready_input_fragment"]["federal_taxable_social_security"] == "20000"
+    assert bundle["nc_input"].federal_agi == 48000.0
+    assert bundle["nc_input"].federal_taxable_social_security == 20000.0
+    assert bundle["nc_result"].breakdown["starting_federal_agi"] == 48000.0
+    assert bundle["nc_result"].breakdown["less_federal_taxable_social_security"] == 20000.0
+
+
+def test_build_single_row_summary_payload_separates_case_federal_and_nc_sections_when_overrides_are_blank():
+    row = _sample_bank_row()
+    bundle = run_single_row_combined_two_pass(row)
+
+    payload = build_single_row_summary_payload(bundle)
+
+    assert payload["case_metadata"]["case_id"] == "single_case_001"
+    assert payload["case_metadata"]["state_code"] == "NC"
+    assert payload["federal"]["agi"] == bundle["federal_result"].agi
+    assert payload["nc_planning"]["nc_input"].federal_agi == float(bundle["nc_ready_input_fragment"]["federal_agi"])
+    assert payload["nc_input_source"]["source"] == "derived"
+    assert payload["nc_input_source"]["fields"]["federal_agi"] == bundle["nc_ready_input_fragment"]["federal_agi"]
+
+
+def test_build_single_row_summary_payload_separates_case_federal_and_nc_sections_when_manual_override_is_present():
+    row = _sample_bank_row()
+    row["federal_agi"] = "48000"
+    row["federal_taxable_social_security"] = "20000"
+    bundle = run_single_row_combined_two_pass(row)
+
+    payload = build_single_row_summary_payload(bundle)
+
+    assert payload["case_metadata"]["case_id"] == "single_case_001"
+    assert payload["case_metadata"]["state_code"] == "NC"
+    assert payload["federal"]["agi"] == bundle["federal_result"].agi
+    assert payload["nc_planning"]["nc_input"].federal_agi == 48000.0
+    assert payload["nc_input_source"]["source"] == "manual_override"
+    assert payload["nc_input_source"]["fields"]["federal_agi"] == "48000"
+
+
+def test_build_single_row_expected_vs_actual_payload_omits_blank_expected_values_and_supports_federal_and_nc_fields():
+    row = _sample_bank_row()
+    row["expected_federal_total_tax"] = "50000"
+    row["expected_nc_tax"] = "1000"
+    row["expected_ordinary_tax"] = ""
+    bundle = run_single_row_combined_two_pass(row)
+
+    payload = build_single_row_expected_vs_actual_payload(row, bundle)
+
+    assert payload["case_id"] == "single_case_001"
+    assert payload["state_code"] == "NC"
+    assert "expected_federal_total_tax" in payload["comparisons"]
+    assert "expected_nc_tax" in payload["comparisons"]
+    assert "expected_ordinary_tax" not in payload["comparisons"]
+    assert payload["comparisons"]["expected_federal_total_tax"]["matched"] is False
+    assert payload["comparisons"]["expected_nc_tax"]["matched"] is False
+
+
+def test_build_single_row_expected_vs_actual_payload_uses_summary_payload_when_provided():
+    row = _sample_bank_row()
+    row["expected_federal_total_tax"] = "25000"
+    row["expected_nc_tax"] = "5000"
+    summary = build_single_row_summary_payload(run_single_row_combined_two_pass(row))
+
+    payload = build_single_row_expected_vs_actual_payload(row, summary)
+
+    assert payload["case_id"] == "single_case_001"
+    assert payload["comparisons"]["expected_federal_total_tax"]["actual"] == summary["federal"]["total_federal_tax"]
+    assert payload["comparisons"]["expected_nc_tax"]["actual"] == summary["nc_planning"]["nc_result"].nc_income_tax_before_credits
+
+
+def test_render_single_case_summary_includes_federal_nc_sections_and_nc_input_source_note():
+    row = _sample_bank_row()
+    bundle = run_single_row_combined_two_pass(row)
+    summary = build_single_row_summary_payload(bundle)
+    comparison = build_single_row_expected_vs_actual_payload(row, summary)
+
+    rendered = render_single_case_summary(summary, comparison)
+
+    assert "Case summary" in rendered
+    assert "Federal summary:" in rendered
+    assert "NC planning summary:" in rendered
+    assert "NC input source: derived" in rendered
+    assert "expected_federal_total_tax" not in rendered
+
+
+def test_render_single_case_summary_shows_populated_expected_values_and_omits_blank_fields():
+    row = _sample_bank_row()
+    row["expected_federal_total_tax"] = "25000"
+    row["expected_nc_tax"] = "5000"
+    row["expected_ordinary_tax"] = ""
+    bundle = run_single_row_combined_two_pass(row)
+    summary = build_single_row_summary_payload(bundle)
+    comparison = build_single_row_expected_vs_actual_payload(row, summary)
+
+    rendered = render_single_case_summary(summary, comparison)
+
+    assert "Expected vs actual:" in rendered
+    assert "expected_federal_total_tax" in rendered
+    assert "expected_nc_tax" in rendered
+    assert "expected_ordinary_tax" not in rendered
+
+
+def test_run_scenario_bank_csv_cases_returns_one_output_per_valid_row_from_sample_bank():
+    csv_path = Path(__file__).parent / "fixtures" / "phase38a_sample_bank.csv"
+
+    outputs = run_scenario_bank_csv_cases(csv_path)
+
+    assert len(outputs) == 1
+    assert outputs[0]["case_id"] == "single_case_001"
+    assert outputs[0]["summary"]["case_metadata"]["state_code"] == "NC"
+    assert "Federal summary:" in outputs[0]["rendered_summary"]
+
+
+def test_render_single_case_summary_uses_manual_override_source_disclosure_when_present():
+    row = _sample_bank_row()
+    row["federal_agi"] = "48000"
+    row["federal_taxable_social_security"] = "20000"
+    bundle = run_single_row_combined_two_pass(row)
+    summary = build_single_row_summary_payload(bundle)
+    comparison = build_single_row_expected_vs_actual_payload(row, summary)
+
+    rendered = render_single_case_summary(summary, comparison)
+
+    assert "NC input source: manual_override" in rendered
+    assert "federal_agi: 48000" in rendered
+
+
+def test_build_official_source_audit_report_uses_default_sample_bank_fixture():
+    report = build_official_source_audit_report()
+
+    assert report["federal"]["reviewed_cases"][0]["case_id"] == "single_case_001"
+    assert report["nc"]["reviewed_cases"][0]["case_id"] == "single_case_001"
+
+
+def test_build_official_source_audit_report_has_separate_federal_and_nc_sections_and_sources():
+    row = _sample_bank_row()
+
+    report = build_official_source_audit_report([row])
+
+    assert report["official_sources"]["federal"][0].startswith("IRS")
+    assert report["official_sources"]["nc"][0].startswith("NC")
+    assert report["federal"]["reviewed_cases"][0]["case_id"] == "single_case_001"
+    assert report["nc"]["reviewed_cases"][0]["case_id"] == "single_case_001"
+    assert report["federal"]["summary"]["status"] == "no_confirmed_defect_in_current_scope"
+
+
+def test_classify_audit_difference_handles_match_rounding_and_formula_defect_cases():
+    assert classify_audit_difference(100.0, 100.0) == "matches_official_source"
+    assert classify_audit_difference(100.02, 100.0) == "rounding_presentation_difference"
+    assert classify_audit_difference(200.0, 100.0) == "potential_formula_defect"
 
 
 def test_phase_38a_contract_definition_freezes_approved_column_groups():
