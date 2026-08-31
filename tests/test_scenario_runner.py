@@ -111,6 +111,35 @@ def test_phase_38a_contract_definition_freezes_approved_column_groups():
     assert "federal_taxable_social_security" not in required
 
 
+def test_phase_38a_deferred_validation_boundary_is_documentation_only():
+    required = PHASE_38A_REQUIRED_BASE_INPUT_COLUMNS
+    optional_override = PHASE_38A_OPTIONAL_BASE_OR_OVERRIDE_COLUMNS
+    expected = PHASE_38A_OPTIONAL_EXPECTED_ANSWER_COLUMNS
+    metadata = PHASE_38A_OPTIONAL_METADATA_STATUS_COLUMNS
+    deferred_behaviors = {
+        "blank_string_normalization",
+        "spreadsheet_row_parsing",
+        "two_pass_derivation_behavior",
+    }
+    runtime_fixture_schema_keys = {
+        "schema_version",
+        "id",
+        "description",
+        "scenario",
+        "expected",
+    }
+
+    assert required.isdisjoint(expected)
+    assert required.isdisjoint(metadata)
+    assert optional_override.isdisjoint(expected)
+    assert optional_override.isdisjoint(metadata)
+    assert deferred_behaviors.isdisjoint(required)
+    assert deferred_behaviors.isdisjoint(optional_override)
+    assert deferred_behaviors.isdisjoint(expected)
+    assert deferred_behaviors.isdisjoint(metadata)
+    assert deferred_behaviors.isdisjoint(runtime_fixture_schema_keys)
+
+
 def test_load_scenario_fixture_validates_native_tax_input():
     path = write_fixture(Path(__file__).parent, "unused")
     try:
