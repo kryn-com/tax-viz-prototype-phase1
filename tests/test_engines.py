@@ -1,6 +1,10 @@
 import pytest
 from models.inputs import DeductionMode, TaxScenarioInput, FilingStatus
-from engines.federal_ordinary import compute_federal_ordinary_tax
+from engines.federal_ordinary import (
+    compute_federal_ordinary_tax,
+    reproduce_provisional_printed_tax_table_ordinary_tax,
+)
+from rules.federal.year_2026 import get_brackets_for_status
 
 
 def create_base_scenario(
@@ -274,3 +278,125 @@ def test_explicit_deduction_above_standard_remains_unchanged():
 
     assert result.deduction_applied == 20000.0
     assert result.taxable_ordinary_income == 30000.0
+
+
+def _compute_exact_tax_from_brackets(status: FilingStatus, taxable_income: float) -> float:
+    brackets = get_brackets_for_status(status)
+    tax = 0.0
+    for bracket in brackets:
+        lower = bracket["lower"]
+        upper = bracket["upper"]
+        rate = bracket["rate"]
+        if taxable_income <= lower:
+            continue
+        taxed_amount = taxable_income - lower if upper is None else min(taxable_income, upper) - lower
+        tax += taxed_amount * rate
+    return tax
+
+
+def test_provisional_table_midpoint_below_5_uses_0_midpoint():
+    result = reproduce_provisional_printed_tax_table_ordinary_tax(
+        filing_status=FilingStatus.SINGLE,
+        taxable_income=4.99,
+    )
+
+    assert result.interval_lower_bound == 0.0
+    assert result.interval_upper_bound_exclusive == 5.0
+    assert result.midpoint_used == 0.0
+    assert result.reproduced_ordinary_tax == 0.0
+    assert result.fallback_to_exact is False
+
+
+def test_provisional_table_midpoint_5_to_less_than_15_uses_10_midpoint():
+    result = reproduce_provisional_printed_tax_table_ordinary_tax(
+        filing_status=FilingStatus.SINGLE,
+        taxable_income=5.0,
+    )
+
+    assert result.interval_lower_bound == 5.0
+    assert result.interval_upper_bound_exclusive == 15.0
+    assert result.midpoint_used == 10.0
+    assert result.reproduced_ordinary_tax == 1.0
+    assert result.fallback_to_exact is False
+
+
+def test_provisional_table_midpoint_15_to_less_than_25_uses_20_midpoint():
+    result = reproduce_provisional_printed_tax_table_ordinary_tax(
+        filing_status=FilingStatus.SINGLE,
+        taxable_income=15.0,
+    )
+
+    assert result.interval_lower_bound == 15.0
+    assert result.interval_upper_bound_exclusive == 25.0
+    assert result.midpoint_used == 20.0
+    assert result.reproduced_ordinary_tax == 2.0
+    assert result.fallback_to_exact is False
+
+
+def test_provisional_table_midpoint_25_dollar_interval_behavior():
+    result = reproduce_provisional_printed_tax_table_ordinary_tax(
+        filing_status=FilingStatus.SINGLE,
+        taxable_income=26.0,
+    )
+
+    assert result.interval_lower_bound == 25.0
+    assert result.interval_upper_bound_exclusive == 50.0
+    assert result.midpoint_used == 37.5
+    assert result.fallback_to_exact is False
+
+
+def test_provisional_table_midpoint_50_dollar_interval_behavior():
+    result = reproduce_provisional_printed_tax_table_ordinary_tax(
+        filing_status=FilingStatus.SINGLE,
+        taxable_income=3049.99,
+    )
+
+    assert result.interval_lower_bound == 3000.0
+    assert result.interval_upper_bound_exclusive == 3050.0
+    assert result.midpoint_used == 3025.0
+    assert result.fallback_to_exact is False
+
+
+def test_provisional_table_rounds_to_whole_dollar_half_up():
+    result = reproduce_provisional_printed_tax_table_ordinary_tax(
+        filing_status=FilingStatus.SINGLE,
+        taxable_income=3025.0,
+    )
+
+    assert result.midpoint_used == 3025.0
+    assert result.reproduced_ordinary_tax == 303.0
+
+
+def test_provisional_table_100000_boundary_uses_exact_fallback():
+    result = reproduce_provisional_printed_tax_table_ordinary_tax(
+        filing_status=FilingStatus.SINGLE,
+        taxable_income=100000.0,
+    )
+
+    expected_exact = _compute_exact_tax_from_brackets(FilingStatus.SINGLE, 100000.0)
+    assert result.fallback_to_exact is True
+    assert result.interval_lower_bound == 100000.0
+    assert result.interval_upper_bound_exclusive is None
+    assert result.midpoint_used == 100000.0
+    assert result.reproduced_ordinary_tax == expected_exact
+
+
+@pytest.mark.parametrize(
+    ("status", "taxable_income"),
+    [
+        (FilingStatus.SINGLE, 50000.0),
+        (FilingStatus.MARRIED_FILING_JOINTLY, 50000.0),
+        (FilingStatus.HEAD_OF_HOUSEHOLD, 50000.0),
+    ],
+)
+def test_provisional_table_uses_supported_2026_statutory_schedules(status: FilingStatus, taxable_income: float):
+    result = reproduce_provisional_printed_tax_table_ordinary_tax(
+        filing_status=status,
+        taxable_income=taxable_income,
+    )
+
+    expected_exact_midpoint_tax = _compute_exact_tax_from_brackets(status, result.midpoint_used)
+    expected_whole_dollar = float(int(expected_exact_midpoint_tax + 0.5))
+
+    assert result.fallback_to_exact is False
+    assert result.reproduced_ordinary_tax == expected_whole_dollar

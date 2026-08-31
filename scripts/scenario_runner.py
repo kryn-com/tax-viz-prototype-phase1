@@ -9,9 +9,10 @@ import math
 from pathlib import Path
 from typing import Any
 
+from engines.federal_ordinary import reproduce_provisional_printed_tax_table_ordinary_tax
 from engines.federal_orchestrator import orchestrate_federal_tax
 from engines.state_tax import compute_nc_tax
-from models.inputs import TaxScenarioInput
+from models.inputs import FilingStatus, TaxScenarioInput
 from presentation.tax_stack_data import build_federal_tax_stack_view_model
 from presentation.tax_stack_svg import render_federal_tax_stack_svg
 
@@ -322,6 +323,40 @@ def build_single_row_expected_vs_actual_payload(
     federal_section = summary_payload["federal"]
     nc_section = summary_payload["nc_planning"]
 
+    comparison_overrides: dict[str, dict[str, Any]] = {}
+    taxable_ordinary_income = float(federal_section["taxable_ordinary_income"])
+    if taxable_ordinary_income < 100000.0:
+        filing_status_raw = summary_payload["case_metadata"].get("filing_status")
+        try:
+            filing_status = FilingStatus(filing_status_raw)
+        except (TypeError, ValueError):
+            filing_status = None
+
+        if filing_status is not None:
+            provisional = reproduce_provisional_printed_tax_table_ordinary_tax(
+                filing_status=filing_status,
+                taxable_income=taxable_ordinary_income,
+            )
+            provisional_validation_total = (
+                provisional.reproduced_ordinary_tax
+                + float(federal_section["ltcg_qd_tax"])
+                + float(federal_section["niit_tax"])
+            )
+            comparison_note = (
+                "Validation-only provisional 2026 printed-tax-table reproduction policy "
+                "pending official 2026 IRS printed tax table publication."
+            )
+            comparison_overrides["expected_ordinary_tax"] = {
+                "actual": provisional.reproduced_ordinary_tax,
+                "comparison_method": provisional.method_label,
+                "comparison_note": comparison_note,
+            }
+            comparison_overrides["expected_federal_total_tax"] = {
+                "actual": provisional_validation_total,
+                "comparison_method": provisional.method_label,
+                "comparison_note": comparison_note,
+            }
+
     actual_values = {
         "expected_federal_total_tax": federal_section["total_federal_tax"],
         "expected_ordinary_tax": federal_section["ordinary_tax"],
@@ -347,14 +382,21 @@ def build_single_row_expected_vs_actual_payload(
             expected_value = float(raw_expected)
         except (TypeError, ValueError):
             continue
-        actual_value = actual_values[expected_key]
+        override = comparison_overrides.get(expected_key, {})
+        actual_value = override.get("actual", actual_values[expected_key])
         difference = actual_value - expected_value
-        comparisons[expected_key] = {
+        comparison_item = {
             "expected": expected_value,
             "actual": actual_value,
             "matched": abs(difference) <= EXPECTED_TOLERANCE,
             "difference": difference,
         }
+        if "comparison_method" in override:
+            comparison_item["comparison_method"] = override["comparison_method"]
+        if "comparison_note" in override:
+            comparison_item["comparison_note"] = override["comparison_note"]
+
+        comparisons[expected_key] = comparison_item
 
     return {
         "case_id": row.get("case_id"),

@@ -5,7 +5,8 @@ from xml.etree import ElementTree
 import pytest
 
 from engines.federal_orchestrator import orchestrate_federal_tax
-from models.inputs import TaxScenarioInput
+from engines.federal_ordinary import reproduce_provisional_printed_tax_table_ordinary_tax
+from models.inputs import TaxScenarioInput, FilingStatus
 from scripts.scenario_runner import (
     EXPECTED_TOLERANCE,
     build_nc_defaults_from_federal_result,
@@ -117,7 +118,8 @@ def test_load_scenario_bank_csv_reads_sample_bank_row_with_blank_optional_cells_
     assert sample_row["case_id"] == "single_case_001"
     assert sample_row["federal_agi"] == ""
     assert sample_row["federal_taxable_social_security"] == ""
-    assert sample_row["expected_federal_total_tax"] == ""
+    assert sample_row["expected_federal_total_tax"] == "5023"
+    assert sample_row["expected_ordinary_tax"] == ""
 
 
 def test_load_scenario_bank_csv_requires_required_base_fields(tmp_path):
@@ -470,8 +472,9 @@ def test_phase_38a_csv_sample_bank_header_and_row_contract():
 
 def test_phase_38b_blank_optional_expected_result_cells_are_allowed_and_remain_blank():
     sample_row = _sample_bank_row()
-    assert sample_row["expected_federal_total_tax"] == ""
-    assert sample_row["expected_nc_tax"] == ""
+    assert sample_row["expected_federal_total_tax"] == "5023"
+    assert sample_row["expected_nc_tax"] == "1885"
+    assert sample_row["expected_ordinary_tax"] == ""
     assert sample_row["expected_projected_irmaa_2028_premium"] == ""
 
 
@@ -495,8 +498,9 @@ def test_phase_38b_required_base_inputs_remain_populated_while_optional_override
 
     assert sample_row["federal_agi"] == ""
     assert sample_row["federal_taxable_social_security"] == ""
-    assert sample_row["expected_federal_total_tax"] == ""
-    assert sample_row["expected_nc_tax"] == ""
+    assert sample_row["expected_federal_total_tax"] == "5023"
+    assert sample_row["expected_nc_tax"] == "1885"
+    assert sample_row["expected_ordinary_tax"] == ""
     assert sample_row["expected_projected_irmaa_2028_premium"] == ""
 
 
@@ -651,12 +655,184 @@ def test_build_single_row_expected_vs_actual_payload_uses_summary_payload_when_p
     row["expected_federal_total_tax"] = "25000"
     row["expected_nc_tax"] = "5000"
     summary = build_single_row_summary_payload(run_single_row_combined_two_pass(row))
+    filing_status = FilingStatus(summary["case_metadata"]["filing_status"])
+    provisional = reproduce_provisional_printed_tax_table_ordinary_tax(
+        filing_status=filing_status,
+        taxable_income=summary["federal"]["taxable_ordinary_income"],
+    )
+    provisional_total = (
+        provisional.reproduced_ordinary_tax
+        + summary["federal"]["ltcg_qd_tax"]
+        + summary["federal"]["niit_tax"]
+    )
 
     payload = build_single_row_expected_vs_actual_payload(row, summary)
 
     assert payload["case_id"] == "single_case_001"
-    assert payload["comparisons"]["expected_federal_total_tax"]["actual"] == summary["federal"]["total_federal_tax"]
+    assert payload["comparisons"]["expected_federal_total_tax"]["actual"] == provisional_total
     assert payload["comparisons"]["expected_nc_tax"]["actual"] == summary["nc_planning"]["nc_result"].nc_income_tax_before_credits
+
+
+def test_build_single_row_expected_vs_actual_payload_allows_below_100k_expected_ordinary_to_match_provisional_reproduction():
+    row = _sample_bank_row()
+    row["ordinary_income"] = "50000"
+    row["ltcg_qd_income"] = "0"
+    row["social_security_income"] = "0"
+
+    summary = build_single_row_summary_payload(run_single_row_combined_two_pass(row))
+    filing_status = FilingStatus(summary["case_metadata"]["filing_status"])
+    provisional = reproduce_provisional_printed_tax_table_ordinary_tax(
+        filing_status=filing_status,
+        taxable_income=summary["federal"]["taxable_ordinary_income"],
+    )
+
+    row["expected_ordinary_tax"] = str(provisional.reproduced_ordinary_tax)
+    payload = build_single_row_expected_vs_actual_payload(row, summary)
+    comparison = payload["comparisons"]["expected_ordinary_tax"]
+
+    assert comparison["matched"] is True
+    assert comparison["actual"] == provisional.reproduced_ordinary_tax
+    assert comparison["actual"] != summary["federal"]["ordinary_tax"]
+    assert comparison["comparison_method"] == provisional.method_label
+    assert "pending official 2026 IRS printed tax table" in comparison["comparison_note"]
+
+
+def test_build_single_row_expected_vs_actual_payload_allows_below_100k_expected_federal_total_to_match_provisional_reproduction():
+    row = _sample_bank_row()
+    row["ordinary_income"] = "50000"
+    row["ltcg_qd_income"] = "0"
+    row["social_security_income"] = "0"
+
+    summary = build_single_row_summary_payload(run_single_row_combined_two_pass(row))
+    filing_status = FilingStatus(summary["case_metadata"]["filing_status"])
+    provisional = reproduce_provisional_printed_tax_table_ordinary_tax(
+        filing_status=filing_status,
+        taxable_income=summary["federal"]["taxable_ordinary_income"],
+    )
+    provisional_total = (
+        provisional.reproduced_ordinary_tax
+        + summary["federal"]["ltcg_qd_tax"]
+        + summary["federal"]["niit_tax"]
+    )
+
+    row["expected_federal_total_tax"] = str(provisional_total)
+    payload = build_single_row_expected_vs_actual_payload(row, summary)
+    comparison = payload["comparisons"]["expected_federal_total_tax"]
+
+    assert comparison["matched"] is True
+    assert comparison["actual"] == provisional_total
+    assert comparison["actual"] != summary["federal"]["total_federal_tax"]
+    assert comparison["comparison_method"] == provisional.method_label
+    assert "pending official 2026 IRS printed tax table" in comparison["comparison_note"]
+
+
+def test_build_single_row_expected_vs_actual_payload_preserves_exact_summary_outputs():
+    row = _sample_bank_row()
+    bundle = run_single_row_combined_two_pass(row)
+    summary = build_single_row_summary_payload(bundle)
+
+    assert summary["federal"]["ordinary_tax"] == bundle["federal_result"].ordinary_tax
+    assert summary["federal"]["total_federal_tax"] == bundle["federal_result"].total_federal_tax
+
+
+def test_build_single_row_expected_vs_actual_payload_uses_exact_method_at_and_above_100k_taxable_income():
+    row = _sample_bank_row()
+    row["ordinary_income"] = "200000"
+    row["ltcg_qd_income"] = "0"
+    row["social_security_income"] = "0"
+
+    summary = build_single_row_summary_payload(run_single_row_combined_two_pass(row))
+    assert summary["federal"]["taxable_ordinary_income"] >= 100000.0
+
+    row["expected_ordinary_tax"] = str(summary["federal"]["ordinary_tax"])
+    payload = build_single_row_expected_vs_actual_payload(row, summary)
+    comparison = payload["comparisons"]["expected_ordinary_tax"]
+
+    assert comparison["matched"] is True
+    assert comparison["actual"] == summary["federal"]["ordinary_tax"]
+    assert "comparison_method" not in comparison
+    assert "comparison_note" not in comparison
+
+
+def test_build_single_row_expected_vs_actual_payload_preserves_nc_behavior():
+    row = _sample_bank_row()
+    summary = build_single_row_summary_payload(run_single_row_combined_two_pass(row))
+    row["expected_nc_tax"] = str(summary["nc_planning"]["nc_result"].nc_income_tax_before_credits)
+
+    payload = build_single_row_expected_vs_actual_payload(row, summary)
+    comparison = payload["comparisons"]["expected_nc_tax"]
+
+    assert comparison["matched"] is True
+    assert comparison["actual"] == summary["nc_planning"]["nc_result"].nc_income_tax_before_credits
+    assert "comparison_method" not in comparison
+    assert "comparison_note" not in comparison
+
+
+def test_build_single_row_expected_vs_actual_payload_preserves_niit_behavior():
+    row = _sample_bank_row()
+    row["ordinary_income"] = "90000"
+    row["ltcg_qd_income"] = "130000"
+    row["social_security_income"] = "0"
+
+    summary = build_single_row_summary_payload(run_single_row_combined_two_pass(row))
+    row["expected_niit_tax"] = str(summary["federal"]["niit_tax"])
+
+    payload = build_single_row_expected_vs_actual_payload(row, summary)
+    comparison = payload["comparisons"]["expected_niit_tax"]
+
+    assert comparison["matched"] is True
+    assert comparison["actual"] == summary["federal"]["niit_tax"]
+    assert "comparison_method" not in comparison
+    assert "comparison_note" not in comparison
+
+
+def test_build_single_row_expected_vs_actual_payload_preserves_irmaa_boundary_behavior():
+    row = _sample_bank_row()
+    row["expected_projected_irmaa_2028_premium"] = "250"
+    row["expected_projected_irmaa_2028_surcharge"] = "30"
+
+    payload = build_single_row_expected_vs_actual_payload(row, run_single_row_combined_two_pass(row))
+
+    assert "expected_projected_irmaa_2028_premium" not in payload["comparisons"]
+    assert "expected_projected_irmaa_2028_surcharge" not in payload["comparisons"]
+
+
+def test_build_single_row_expected_vs_actual_payload_preserves_blank_expected_fields_behavior():
+    row = _sample_bank_row()
+    row["expected_federal_total_tax"] = ""
+    row["expected_ordinary_tax"] = ""
+    row["expected_ltcg_qd_tax"] = ""
+    row["expected_niit_tax"] = ""
+    row["expected_nc_tax"] = ""
+
+    payload = build_single_row_expected_vs_actual_payload(row, run_single_row_combined_two_pass(row))
+
+    assert payload["comparisons"] == {}
+
+
+def test_build_single_row_expected_vs_actual_payload_is_backward_compatible_with_additive_metadata_only():
+    row = _sample_bank_row()
+    row["ordinary_income"] = "50000"
+    row["ltcg_qd_income"] = "0"
+    row["social_security_income"] = "0"
+
+    summary = build_single_row_summary_payload(run_single_row_combined_two_pass(row))
+    filing_status = FilingStatus(summary["case_metadata"]["filing_status"])
+    provisional = reproduce_provisional_printed_tax_table_ordinary_tax(
+        filing_status=filing_status,
+        taxable_income=summary["federal"]["taxable_ordinary_income"],
+    )
+
+    row["expected_ordinary_tax"] = str(provisional.reproduced_ordinary_tax)
+    row["expected_nc_tax"] = str(summary["nc_planning"]["nc_result"].nc_income_tax_before_credits)
+
+    payload = build_single_row_expected_vs_actual_payload(row, summary)
+    ordinary_comparison = payload["comparisons"]["expected_ordinary_tax"]
+    nc_comparison = payload["comparisons"]["expected_nc_tax"]
+
+    assert {"expected", "actual", "matched", "difference"} <= set(ordinary_comparison)
+    assert {"comparison_method", "comparison_note"} <= set(ordinary_comparison)
+    assert set(nc_comparison) == {"expected", "actual", "matched", "difference"}
 
 
 def test_render_single_case_summary_includes_federal_nc_sections_and_nc_input_source_note():
@@ -671,7 +847,8 @@ def test_render_single_case_summary_includes_federal_nc_sections_and_nc_input_so
     assert "Federal summary:" in rendered
     assert "NC planning summary:" in rendered
     assert "NC input source: derived" in rendered
-    assert "expected_federal_total_tax" not in rendered
+    assert "expected_federal_total_tax" in rendered
+    assert "expected_ordinary_tax" not in rendered
 
 
 def test_render_single_case_summary_shows_populated_expected_values_and_omits_blank_fields():
