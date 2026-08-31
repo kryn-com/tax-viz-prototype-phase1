@@ -117,21 +117,42 @@ Out of scope:
 - unsupported Medicare logic,
 - tax-core rework beyond scenario recomputation.
 
-### Candidate Phase 39 — Initial Streamlit Planning App
+### Phase 39 — Initial Streamlit Planning App — Complete
 
-Scope candidate:
-- consumer UI built on already-tested inputs and composed outputs,
-- no new tax logic invented in the UI layer.
+Completed scope:
+- Added a minimal local Streamlit entry point in `streamlit_app.py`.
+- Reused existing typed inputs, federal orchestration, NC planning, projected IRMAA, and ordinary-income/LTCG-QD sliver composition callables.
+- Added baseline, ordinary-income sliver, and LTCG/QD sliver result sections.
+- Kept federal tax, NC tax, NIIT, and projected IRMAA visibly separate.
+- Added explicit unsupported-case messages and example default scenarios.
+- Verified the focused harness/sliver suite with 18 passed tests and the full suite with 302 passed tests.
 
-Out of scope:
+Preserved boundaries:
 - re-deriving or reimplementing tax formulas in the front end,
 - arbitrary state or Medicare expansions,
-- broad feature scope before the contract and harness are stable.
+- combined federal, NC, NIIT, or projected IRMAA totals,
+- broad product scope before local testing feedback.
 
-## Deferred work
+### Next Likely Phase — Feedback-Driven Streamlit Refinement and Validation Cleanup
+
+Scope candidate:
+- collect local testing feedback on the initial shell,
+- address one or two concrete usability or validation-workflow issues,
+- keep the app thin and aligned with existing backend contracts,
+- clarify or simplify result inspection where feedback identifies a need.
+
+Out of scope:
+- new tax formulas or engine changes,
+- broad product redesign,
+- chart/export/persistence architecture,
+- expanded state or Medicare treatment,
+- combined tax totals.
+
+## Deferred Work
 
 - Federal SVG presentation clarity pass remains a low-priority deferred item.
 - Resume it only if needed to support the manual scenario harness or Streamlit consumer experience.
+- Initial Streamlit shell refinement remains deferred until local testing feedback identifies a narrow target.
 - Do not reopen official future premium-year maintenance as a routine obligation.
 - Do not expand tax credits, broader state treatment, or unsupported Medicare logic without explicit approval.
 
@@ -150,9 +171,10 @@ Out of scope:
    - non-taxable SS,
    in a split row, or in a dedicated taxability panel?
 
-## Acceptance style for the next implementation phase
+## Acceptance Style For The Next Implementation Phase
 
-- Narrow and presentation-focused.
+- Narrow and feedback-driven.
+- Focused on Streamlit usability or validation-workflow cleanup.
 - No tax formula changes unless a verified defect is found first.
 - Deterministic SVG output preserved.
 - Focused tests added or updated first.
